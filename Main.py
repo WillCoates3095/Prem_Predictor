@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 
 #Player Stats for last 5 games
@@ -47,3 +48,20 @@ plt.bar(['Fouls','Goals'], [combined_stats['foul_percentage'], combined_stats['g
 plt.title("Player Stats for Last 5 Games")
 plt.ylabel("Percentage")
 plt.show()
+
+#Train a Random Forest Classifier
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, Y_train)
+
+#Make predictions
+Y_pred = model.predict(X_test)
+
+#Evaluate the model
+accuracy = accuracy_score(Y_test, Y_pred)
+print(f"Model Accuracy: {accuracy * 100:.2f}%")
+
+# Predict the outcome for a new match
+new_match = pd.DataFrame({'team_stat': [3], 'opponent_stat': [1]})
+predicted_result = model.predict(new_match)
+
+print("Predicted Result for New Match:", "Win" if predicted_result[0] == 1 else "Loss")
