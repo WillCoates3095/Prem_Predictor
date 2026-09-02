@@ -1,8 +1,23 @@
+import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
+
+#API key and Base URL
+API_KEY = '123'
+BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
+
+# Example fetch team stats from the API
+team_id = '133604'  # Replace with the desired team ID
+response = requests.get(f"{BASE_URL}/{API_KEY}/lookupteam.php?id={team_id}")
+
+if response.status_code == 200:
+    data = response.json()
+    print(data)  # Inspect the data structure
+else:
+    print(f"Error: {response.status_code}")
 
 #Player Stats for last 5 games
 data = {
@@ -38,8 +53,6 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_
 #Combine player stats and match stats
 player_stats = df[['foul_percentage', 'goal_percentage']].iloc[-1]
 team_stats = {'team_stat':3, 'opponent_stat':2}  # Example team stats for the upcoming match
-
-#Output
 combined_stats = {**team_stats, **player_stats.to_dict()}
 print("Combined Stats", combined_stats)
 
