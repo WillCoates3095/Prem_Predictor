@@ -9,40 +9,69 @@ from sklearn.ensemble import RandomForestClassifier
 API_KEY = '123'
 BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
 
-# Example fetch team stats from the API
-team_name = 'Leeds United'
-search_team_url = f'{BASE_URL}/{API_KEY}/searchteams.php'
-response = requests.get(search_team_url, params={'t': team_name})
-
-if response.status_code == 200:
-    team_data = response.json()
-    if team_data['teams']:
-        leeds_team_id = team_data['teams'][0]['idTeam']
-        print(f"Leeds United Team ID: {leeds_team_id}")
-
-    else:
-        print("No team found.")
-else:
-    print(f"Error: {response.status_code}")
-
-#Get Leeds next game
-if 'leeds_team_id' in locals():
-    next_game_url = f'{BASE_URL}/{API_KEY}/eventsnext.php'
-    response = requests.get(next_game_url, params={'id': leeds_team_id})
+def fetch_team_stats():
+    # Example fetch team stats from the API
+    team_name = 'Leeds United'
+    search_team_url = f'{BASE_URL}/{API_KEY}/searchteams.php'
+    response = requests.get(search_team_url, params={'t': team_name})
 
     if response.status_code == 200:
-        next_game_data = response.json()
-        print(next_game_data['events'][0])
-        if next_game_data['events']:
-            next_game = next_game_data['events'][0]
-            opponent = next_game['strAwayTeam'] if next_game['idHomeTeam'] == leeds_team_id else next_game['strHomeTeam']
-            print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n\n\n")
+        team_data = response.json()
+        if team_data['teams']:
+            leeds_team_id = team_data['teams'][0]['idTeam']
+            print(f"Leeds United Team ID: {leeds_team_id}")
+            fetch_next_game(leeds_team_id)
+
         else:
-            print("No upcoming games found.")
+            print("No team found.")
     else:
         print(f"Error: {response.status_code}")
 
+def fetch_next_game(leeds_team_id):
+    #Get Leeds next game
+    if 'leeds_team_id' in locals():
+        next_game_url = f'{BASE_URL}/{API_KEY}/eventsnext.php'
+        response = requests.get(next_game_url, params={'id': leeds_team_id})
 
+        if response.status_code == 200:
+            next_game_data = response.json()
+            print(next_game_data['events'][0])
+            if next_game_data['events']:
+                next_game = next_game_data['events'][0]
+                opponent = next_game['strAwayTeam'] if next_game['idHomeTeam'] == leeds_team_id else next_game['strHomeTeam']
+                print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n\n\n")
+
+                print("Fetching previous games agaist:", opponent)
+                fetch_previous_games(opponent, leeds_team_id)
+            else:
+                print("No upcoming games found.")
+        else:
+            print(f"Error: {response.status_code}")
+
+def fetch_previous_games(opponent,leeds_team_id):
+    #Get leeds last games against same opponent
+    if 'leeds_team_id' in locals():
+        last_games_url = f'{BASE_URL}/{API_KEY}/eventslast.php'
+        response = requests.get(last_games_url, params={'id': leeds_team_id})
+
+        if response.status_code == 200:
+            last_games_data = response.json()
+            print(last_games_data)
+            print(leeds_team_id)
+            if 'results' in last_games_data and last_games_data['results']:
+                #Filter games for ones against opponent
+
+                previous_games = [
+                    game for game in last_games_data['results']
+                    if (game['strHomeTeam'] == opponent or game['strAwayTeam'] == opponent)
+                ]
+                if previous_games:
+                    for game in previous_games:
+                        print(f"- {game['dateEvent']}: {game['strEvent']} - {game['intHomeScore']}:{game['intAwayScore']}")
+                else:
+                    print(f"No previous games found against {opponent}.")
+            else:
+                print("No previous games found.")
 
 #Player Stats for last 5 games
 data = {
@@ -103,3 +132,5 @@ new_match = pd.DataFrame({'team_stat': [3], 'opponent_stat': [1]})
 predicted_result = model.predict(new_match)
 
 print("Predicted Result for New Match:", "Win" if predicted_result[0] == 1 else "Loss")
+
+fetch_team_stats()
