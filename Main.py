@@ -1,3 +1,5 @@
+import os
+import glob
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -42,36 +44,98 @@ def fetch_next_game(leeds_team_id):
                 print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n\n\n")
 
                 print("Fetching previous games agaist:", opponent)
-                fetch_previous_games(opponent, leeds_team_id)
+                fetch_previous_games(opponent)
             else:
                 print("No upcoming games found.")
         else:
             print(f"Error: {response.status_code}")
 
-def fetch_previous_games(opponent,leeds_team_id):
-    #Get leeds last games against same opponent
-    if 'leeds_team_id' in locals():
-        last_games_url = f'{BASE_URL}/{API_KEY}/eventslast.php'
-        response = requests.get(last_games_url, params={'id': leeds_team_id})
+def fetch_previous_games(opponent):
 
-        if response.status_code == 200:
-            last_games_data = response.json()
-            print(last_games_data)
-            print(leeds_team_id)
-            if 'results' in last_games_data and last_games_data['results']:
-                #Filter games for ones against opponent
+    print(f"\nSearching CSV files for all Leeds vs {opponent} matches...")
 
-                previous_games = [
-                    game for game in last_games_data['results']
-                    if (game['strHomeTeam'] == opponent or game['strAwayTeam'] == opponent)
-                ]
-                if previous_games:
-                    for game in previous_games:
-                        print(f"- {game['dateEvent']}: {game['strEvent']} - {game['intHomeScore']}:{game['intAwayScore']}")
-                else:
-                    print(f"No previous games found against {opponent}.")
-            else:
-                print("No previous games found.")
+    # Find all CSV files in the seasons folder
+    csv_files = glob.glob("seasons/*.csv")
+
+    all_matches = []
+
+    for file in csv_files:
+        print(f"Checking: {file}")
+        try:
+            season_df = pd.read_csv(file)
+        except Exception as e:
+            print(f"Could not read {file}: {e}")
+            continue
+        #Make sure required columns exist for the forest later on
+        required_columns = [
+            "strTimestamp",
+            "Home Team",
+            "Home Score",
+            "Away Team",
+            "Away Score"
+        ]
+        missing_columns = [
+            column for column in required_columns
+            if column not in season_df.columns
+        ]
+        if missing_columns:
+            print(f"Skipping {file} - missing columns: {missing_columns}")
+            continue
+
+        #Convert team columns to strings
+        home = season_df["Home Team"].astype(str)
+        away = season_df["Away Team"].astype(str)
+
+        #Get a simpler searchable version of the opponent name
+        opponent_search = opponent.split()[0] # DONT TOUCH THIS CAN CAUSE SO MANY ERRORS - DIFFICULT TO FIND TEAMS
+
+        #Find every Leeds vs opponent match in csv files
+        matches = season_df[
+            (
+                home.str.contains("Leeds", case=False, na=False)
+                &
+                away.str.contains(opponent_search, case=False, na=False)
+            )
+            |
+            (
+                home.str.contains(opponent_search, case=False, na=False)
+                &
+                away.str.contains("Leeds", case=False, na=False)
+            )
+        ]
+        if not matches.empty:
+            print(f"Found {len(matches)} match(es) in {file}")
+            all_matches.append(matches)
+    if not all_matches:
+        print(f"\nNo historical matches found between Leeds United and {opponent} in the CSV files.")
+        return None
+    all_matches_df = pd.concat(
+        all_matches,
+        ignore_index=True
+    )
+    #Convert timestamp to datetime
+    all_matches_df["strTimestamp"] = pd.to_datetime(
+        all_matches_df["strTimestamp"],
+        errors="coerce"
+    )
+    #Remove rows with invalid dates
+    all_matches_df = all_matches_df.dropna(
+        subset=["strTimestamp"]
+    )
+    all_matches_df = all_matches_df.sort_values(
+        "strTimestamp",
+        ascending=False
+    )
+    for _, match in all_matches_df.iterrows():
+        print(
+            f"{match['strTimestamp'].date()} | "
+            f"{match['Home Team']} "
+            f"{match['Home Score']} - "
+            f"{match['Away Score']} "
+            f"{match['Away Team']}"
+        )
+    # Return the full DataFrame instead of just one match
+    return all_matches_df
 
 #Player Stats for last 5 games
 data = {
