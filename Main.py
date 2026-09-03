@@ -10,14 +10,39 @@ API_KEY = '123'
 BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
 
 # Example fetch team stats from the API
-team_id = '133604'  # Replace with the desired team ID
-response = requests.get(f"{BASE_URL}/{API_KEY}/lookupteam.php?id={team_id}")
+team_name = 'Leeds United'
+search_team_url = f'{BASE_URL}/{API_KEY}/searchteams.php'
+response = requests.get(search_team_url, params={'t': team_name})
 
 if response.status_code == 200:
-    data = response.json()
-    print(data)  # Inspect the data structure
+    team_data = response.json()
+    if team_data['teams']:
+        leeds_team_id = team_data['teams'][0]['idTeam']
+        print(f"Leeds United Team ID: {leeds_team_id}")
+
+    else:
+        print("No team found.")
 else:
     print(f"Error: {response.status_code}")
+
+#Get Leeds next game
+if 'leeds_team_id' in locals():
+    next_game_url = f'{BASE_URL}/{API_KEY}/eventsnext.php'
+    response = requests.get(next_game_url, params={'id': leeds_team_id})
+
+    if response.status_code == 200:
+        next_game_data = response.json()
+        print(next_game_data['events'][0])
+        if next_game_data['events']:
+            next_game = next_game_data['events'][0]
+            opponent = next_game['strAwayTeam'] if next_game['idHomeTeam'] == leeds_team_id else next_game['strHomeTeam']
+            print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n\n\n")
+        else:
+            print("No upcoming games found.")
+    else:
+        print(f"Error: {response.status_code}")
+
+
 
 #Player Stats for last 5 games
 data = {
@@ -60,7 +85,7 @@ print("Combined Stats", combined_stats)
 plt.bar(['Fouls','Goals'], [combined_stats['foul_percentage'], combined_stats['goal_percentage']])
 plt.title("Player Stats for Last 5 Games")
 plt.ylabel("Percentage")
-plt.show()
+#plt.show()
 
 #Train a Random Forest Classifier
 model = RandomForestClassifier(random_state=42)
