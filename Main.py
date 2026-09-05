@@ -41,12 +41,32 @@ def fetch_next_game(leeds_team_id):
             if next_game_data['events']:
                 next_game = next_game_data['events'][0]
                 opponent = next_game['strAwayTeam'] if next_game['idHomeTeam'] == leeds_team_id else next_game['strHomeTeam']
+                fetch_last_game(leeds_team_id)
                 print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n\n\n")
-
                 print("Fetching previous games agaist:", opponent)
                 fetch_previous_games(opponent)
             else:
                 print("No upcoming games found.")
+        else:
+            print(f"Error: {response.status_code}")
+
+def fetch_last_game(leeds_team_id):
+    #Get Leeds last game
+    if 'leeds_team_id' in locals():
+        last_game_url = f'{BASE_URL}/{API_KEY}/eventslast.php'
+        response = requests.get(last_game_url, params={'id': leeds_team_id})
+
+        if response.status_code == 200:
+            last_game_data = response.json()
+            if last_game_data['results']:
+                last_game = last_game_data['results'][0]
+                opponent = last_game['strAwayTeam'] if last_game['idHomeTeam'] == leeds_team_id else last_game['strHomeTeam']
+                home_score = last_game['intHomeScore']
+                away_score = last_game['intAwayScore']
+                print(f"Leeds United Last Game: {last_game['strEvent']} on {last_game['dateEvent']} "
+                      f"at {last_game['strVenue']} \nThe fulltime score was {home_score} - {away_score}")
+            else:
+                print("No previous games found.")
         else:
             print(f"Error: {response.status_code}")
 
@@ -66,19 +86,16 @@ def fetch_team_aliases(team_name):
             print(f"No team found.")
     else:
         print(f"Error fetching team aliases: {response.status_code}")
+
 def fetch_previous_games(opponent):
     print(f"\nFetching aliases for {opponent}...")
     aliases = fetch_team_aliases(opponent)
     aliases.append(opponent.split()[0])
     print(f"Aliases found: {aliases}")
-
     print(f"\nSearching CSV files for all Leeds vs {opponent} matches...")
-
-    # Find all CSV files in the seasons folder
     csv_files = glob.glob("seasons/*.csv")
 
     all_matches = []
-
     for file in csv_files:
         print(f"Checking: {file}")
         try:
@@ -86,8 +103,6 @@ def fetch_previous_games(opponent):
         except Exception as e:
             print(f"Could not read {file}: {e}")
             continue
-
-        # Ensure required columns exist
         required_columns = [
             "strTimestamp",
             "Home Team",
@@ -102,11 +117,8 @@ def fetch_previous_games(opponent):
         if missing_columns:
             print(f"Skipping {file} - missing columns: {missing_columns}")
             continue
-
-        # Convert team columns to strings
         home = season_df["Home Team"].astype(str)
         away = season_df["Away Team"].astype(str)
-
         # Search for matches using aliases
         matches = season_df[
             (
