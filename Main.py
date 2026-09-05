@@ -50,7 +50,27 @@ def fetch_next_game(leeds_team_id):
         else:
             print(f"Error: {response.status_code}")
 
+def fetch_team_aliases(team_name):
+    url = f"{BASE_URL}/{API_KEY}/searchteams.php"
+    response = requests.get(url, params={"t": team_name})
+
+    if response.status_code == 200:
+        data = response.json()
+        if data and "teams" in data and data["teams"]:
+            team_info = data["teams"][0]
+            aliases = [team_info["strTeam"]]
+            if team_info.get("strAlternate"):
+                aliases.extend(team_info["strAlternate"].split(", "))
+            return aliases
+        else:
+            print(f"No team found.")
+    else:
+        print(f"Error fetching team aliases: {response.status_code}")
 def fetch_previous_games(opponent):
+    print(f"\nFetching aliases for {opponent}...")
+    aliases = fetch_team_aliases(opponent)
+    aliases.append(opponent.split()[0])
+    print(f"Aliases found: {aliases}")
 
     print(f"\nSearching CSV files for all Leeds vs {opponent} matches...")
 
@@ -66,7 +86,8 @@ def fetch_previous_games(opponent):
         except Exception as e:
             print(f"Could not read {file}: {e}")
             continue
-        #Make sure required columns exist for the forest later on
+
+        # Ensure required columns exist
         required_columns = [
             "strTimestamp",
             "Home Team",
@@ -82,23 +103,20 @@ def fetch_previous_games(opponent):
             print(f"Skipping {file} - missing columns: {missing_columns}")
             continue
 
-        #Convert team columns to strings
+        # Convert team columns to strings
         home = season_df["Home Team"].astype(str)
         away = season_df["Away Team"].astype(str)
 
-        #Get a simpler searchable version of the opponent name
-        opponent_search = opponent.split()[0] # DONT TOUCH THIS CAN CAUSE SO MANY ERRORS - DIFFICULT TO FIND TEAMS
-
-        #Find every Leeds vs opponent match in csv files
+        # Search for matches using aliases
         matches = season_df[
             (
                 home.str.contains("Leeds", case=False, na=False)
                 &
-                away.str.contains(opponent_search, case=False, na=False)
+                away.str.contains('|'.join(aliases), case=False, na=False)
             )
             |
             (
-                home.str.contains(opponent_search, case=False, na=False)
+                home.str.contains('|'.join(aliases), case=False, na=False)
                 &
                 away.str.contains("Leeds", case=False, na=False)
             )
@@ -106,19 +124,21 @@ def fetch_previous_games(opponent):
         if not matches.empty:
             print(f"Found {len(matches)} match(es) in {file}")
             all_matches.append(matches)
+
     if not all_matches:
         print(f"\nNo historical matches found between Leeds United and {opponent} in the CSV files.")
         return None
+
     all_matches_df = pd.concat(
         all_matches,
         ignore_index=True
     )
-    #Convert timestamp to datetime
+    # Convert timestamp to datetime
     all_matches_df["strTimestamp"] = pd.to_datetime(
         all_matches_df["strTimestamp"],
         errors="coerce"
     )
-    #Remove rows with invalid dates
+    # Remove rows with invalid dates
     all_matches_df = all_matches_df.dropna(
         subset=["strTimestamp"]
     )
@@ -134,9 +154,7 @@ def fetch_previous_games(opponent):
             f"{match['Away Score']} "
             f"{match['Away Team']}"
         )
-    # Return the full DataFrame instead of just one match
     return all_matches_df
-
 #Player Stats for last 5 games
 data = {
     'player_id' : [1,1,1,1,1],
