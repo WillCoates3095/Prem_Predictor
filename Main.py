@@ -28,6 +28,7 @@ print(df)
 # Fetch team stats from the API
 leeds_team_id = fetch_team_stats()
 if leeds_team_id:
+
     previous_games = fetch_next_game(leeds_team_id)
 
     if previous_games:
@@ -74,15 +75,26 @@ if not match_df.empty:
     # Make predictions
     Y_pred = model.predict(X_test)
 
+    # Predict the outcome for a new match
+    if leeds_team_id:
+        next_game_stats = fetch_next_game(leeds_team_id)
+        if next_game_stats:
+            #Use stats from upcoming game
+            opponent_stat = next_game_stats[0]["opponent_stat"]
+            team_stat = next_game_stats[0]["team_stat"]
+            new_match = pd.DataFrame({'team_stat': [team_stat], 'opponent_stat': [opponent_stat]})
+
+            predicted_result = model.predict(new_match)
+            print(
+                f"Predicted Result for Next Match: {'Win' if predicted_result[0] == 1 else 'Draw' if predicted_result[0] == 2 else 'Loss'}")
+        else:
+            print("No upcoming game stats available for prediction.")
+    else:
+        print("No team ID available for prediction.")
+
     # Evaluate the model
     accuracy = accuracy_score(Y_test, Y_pred)
     print(f"Model Accuracy: {accuracy * 100:.2f}%")
 
-    # Predict the outcome for a new match
-    new_match = pd.DataFrame({'team_stat': [3], 'opponent_stat': [1]})
-    predicted_result = model.predict(new_match)
-
-    print("Predicted Result for New Match:", "Win" if predicted_result[0] == 1 else "Loss")
 else:
     print("No data available for training.")
-
