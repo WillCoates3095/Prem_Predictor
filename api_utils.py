@@ -1,7 +1,7 @@
 import requests
 import glob
 import pandas as pd
-
+from django.db.models.expressions import result
 
 API_KEY = '123'
 BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
@@ -17,12 +17,13 @@ def fetch_team_stats():
         if team_data['teams']:
             leeds_team_id = team_data['teams'][0]['idTeam']
             print(f"Leeds United Team ID: {leeds_team_id}")
-            fetch_next_game(leeds_team_id)
-
+            return leeds_team_id
         else:
             print("No team found.")
+            return None
     else:
         print(f"Error: {response.status_code}")
+        return None
 
 def fetch_next_game(leeds_team_id):
     #Get Leeds next game
@@ -39,11 +40,13 @@ def fetch_next_game(leeds_team_id):
                 fetch_last_game(leeds_team_id)
                 print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n\n\n")
                 print("Fetching previous games agaist:", opponent)
-                fetch_previous_games(opponent)
+                return fetch_previous_games(opponent)
             else:
                 print("No upcoming games found.")
+                return []
         else:
             print(f"Error: {response.status_code}")
+            return  []
 
 def fetch_last_game(leeds_team_id):
     #Get Leeds last game
@@ -79,6 +82,7 @@ def fetch_team_aliases(team_name):
             return aliases
         else:
             print(f"No team found.")
+            return []
     else:
         print(f"Error fetching team aliases: {response.status_code}")
 
@@ -134,8 +138,7 @@ def fetch_previous_games(opponent):
 
     if not all_matches:
         print(f"\nNo historical matches found between Leeds United and {opponent} in the CSV files.")
-        return None
-
+        return []
     all_matches_df = pd.concat(
         all_matches,
         ignore_index=True
@@ -153,7 +156,25 @@ def fetch_previous_games(opponent):
         "strTimestamp",
         ascending=False
     )
+    match_data_list = []
     for _, match in all_matches_df.iterrows():
+        team_stat = match['Home Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Away Score']
+        opponent_stat = match['Away Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Home Score']
+        if opponent_stat == team_stat:
+            result = 2
+            print("draw")
+        elif team_stat > opponent_stat:
+            result = 1 #Win
+            print("win")
+        else:
+            result = 0
+            print("loss")
+        match_data_list.append({
+            "team_stat": team_stat,
+            "opponent_stat": opponent_stat,
+            "result": result
+        })
+        print(match_data_list)
         print(
             f"{match['strTimestamp'].date()} | "
             f"{match['Home Team']} "
@@ -161,4 +182,5 @@ def fetch_previous_games(opponent):
             f"{match['Away Score']} "
             f"{match['Away Team']}"
         )
-    return all_matches_df
+    return match_data_list
+    #return all_matches_df
