@@ -38,7 +38,7 @@ def fetch_next_game(leeds_team_id):
                 next_game = next_game_data['events'][0]
                 opponent = next_game['strAwayTeam'] if next_game['idHomeTeam'] == leeds_team_id else next_game['strHomeTeam']
                 fetch_last_game(leeds_team_id)
-                print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n\n\n")
+                print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n")
                 print("Fetching previous games agaist:", opponent)
                 return fetch_previous_games(opponent)
             else:
@@ -61,7 +61,7 @@ def fetch_last_game(leeds_team_id):
                 opponent = last_game['strAwayTeam'] if last_game['idHomeTeam'] == leeds_team_id else last_game['strHomeTeam']
                 home_score = last_game['intHomeScore']
                 away_score = last_game['intAwayScore']
-                print(f"Leeds United Last Game: {last_game['strEvent']} on {last_game['dateEvent']} "
+                print(f"\nLeeds United Last Game: {last_game['strEvent']} on {last_game['dateEvent']} "
                       f"at {last_game['strVenue']} \nThe fulltime score was {home_score} - {away_score}")
             else:
                 print("No previous games found.")
@@ -91,7 +91,7 @@ def fetch_previous_games(opponent):
     aliases = fetch_team_aliases(opponent)
     aliases.append(opponent.split()[0])
     print(f"Aliases found: {aliases}")
-    print(f"\nSearching CSV files for all Leeds vs {opponent} matches...")
+    print(f"Searching CSV files for all Leeds vs {opponent} matches...")
     csv_files = glob.glob("seasons/*.csv")
 
     all_matches = []
@@ -162,19 +162,15 @@ def fetch_previous_games(opponent):
         opponent_stat = match['Away Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Home Score']
         if opponent_stat == team_stat:
             result = 2
-            print("draw")
         elif team_stat > opponent_stat:
             result = 1 #Win
-            print("win")
         else:
             result = 0
-            print("loss")
         match_data_list.append({
             "team_stat": team_stat,
             "opponent_stat": opponent_stat,
             "result": result
         })
-        print(match_data_list)
         print(
             f"{match['strTimestamp'].date()} | "
             f"{match['Home Team']} "

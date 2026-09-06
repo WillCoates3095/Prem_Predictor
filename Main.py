@@ -86,6 +86,3 @@ if not match_df.empty:
 else:
     print("No data available for training.")
 
-# Main program execution starts here -- all of the above ideally another file
-print(fetch_team_stats())
-print(fetch_next_game(fetch_team_stats()))
