@@ -157,6 +157,7 @@ def fetch_previous_games(opponent):
         ascending=False
     )
     match_data_list = []
+    print()
     for _, match in all_matches_df.iterrows():
         team_stat = match['Home Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Away Score']
         opponent_stat = match['Away Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Home Score']
@@ -178,5 +179,6 @@ def fetch_previous_games(opponent):
             f"{match['Away Score']} "
             f"{match['Away Team']}"
         )
+    print()
     return match_data_list
     #return all_matches_df
