@@ -1,12 +1,5 @@
-import os
-import glob
-import requests
-import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.ensemble import RandomForestClassifier
-
+from model_utils import *
 from api_utils import *
 
 # Player Stats for last 5 games
@@ -31,3 +24,5 @@ plt.title("Player Stats for Last 5 Games")
 plt.ylabel("Percentage")
 # plt.show()
 
+## MAIN STARTPOINT ##
+generate_prediction(get_previous_game_data())
