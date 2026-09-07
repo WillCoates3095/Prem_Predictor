@@ -83,6 +83,7 @@ def fetch_last_game(leeds_team_id):
                 away_score = last_game['intAwayScore']
                 print(f"\nLeeds United Last Game: {last_game['strEvent']} on {last_game['dateEvent']} "
                       f"at {last_game['strVenue']} \nThe fulltime score was {home_score} - {away_score}")
+                return last_game
             else:
                 print("No previous games found.")
         else:

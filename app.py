@@ -37,13 +37,14 @@ def home():
 
     return render_template_string('''
         <h1>Leeds United Match Prediction</h1>
-        <p>Prediction: {{ prediction }}</p>
         <h2>Next Game Details:</h2>
         <pre>{{ next_game_str }} </pre>
         <h2>Previous Encounters:</h2>
         <pre>{{ previous_encounters_str }}</pre>
+        <h2>Prediction for Next Game:</h2>
+        <pre>Prediction: {{ prediction }}</pre>
         <h2>Last Game Details:</h2>
-        <pre> {{ last_game_str }} </pre>
+        <pre>{{ last_game_str }}</pre>
     ''', prediction=prediction, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str)
 
 if __name__ == '__main__':
