@@ -18,22 +18,20 @@ def home():
         if opponent:
             previous_encounters = fetch_previous_games(opponent)
     next_game_str = (
-        f"{next_game.get('strEvent', 'N/A')} on {next_game.get('dateEvent', 'N/A')} at {next_game.get('strVenue', 'N/A')}"
-        if next_game else "No next game details available."
+        f"{next_game.get('strEvent', 'N/A')} on {next_game.get('dateEvent', 'N/A')} at {next_game.get('strVenue', 'N/A')}" if next_game else "No next game details available."
     )
 
+    print(previous_encounters, last_game_details)
+    for match in previous_encounters:
+        print(f"Home Team: {match.get('Home Team', 'N/A')}")
     previous_encounters_str = "\n".join([
-        f"Team Stat: {match.get('team_stat', 'N/A')} | Opponent Stat: {match.get('opponent_stat', 'N/A')} | Result: {match.get('result', 'N/A')}"
+        f"Leeds: {match.get('team_stat', 'N/A')} | {match.get('opponent_stat', 'N/A')}"
+        f" : {opponent} |{'H' if match.get('home_team', 'N/A').strip().lower() in ['leeds united', 'leeds'] else 'A'}| Result: {match.get('result', 'N/A')}"
         for match in previous_encounters
     ])
-
     last_game_str = (
-        f"{last_game_details.get('dateEvent', 'N/A')} | {last_game_details.get('strHomeTeam', 'N/A')} {last_game_details.get('intHomeScore', '-')} - {last_game_details.get('intAwayScore', '-')} {last_game_details.get('strAwayTeam', 'N/A')}"
-        if last_game_details else "No last game details available."
+        f"{last_game_details.get('dateEvent', 'N/A')} | {last_game_details.get('strHomeTeam', 'N/A')} {last_game_details.get('intHomeScore', '-')} - {last_game_details.get('intAwayScore', '-')} {last_game_details.get('strAwayTeam', 'N/A')} at {last_game_details.get('strVenue','N/A')}" if last_game_details else "No last game details available."
     )
-    print("Next Game Details:", next_game)
-    print("Last Game Details:", last_game_details)
-    print("Previous Encounters:", previous_encounters)
 
     return render_template_string('''
         <h1>Leeds United Match Prediction</h1>
