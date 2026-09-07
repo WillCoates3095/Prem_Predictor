@@ -58,8 +58,15 @@ def generate_prediction(match_df):
                 new_match = pd.DataFrame({'team_stat': [team_stat], 'opponent_stat': [opponent_stat]})
 
                 predicted_result = model.predict(new_match)
-                print(
-                    f"Predicted Result for Next Match: {'Win' if predicted_result[0] == 1 else 'Draw' if predicted_result[0] == 2 else 'Loss'}")
+                if predicted_result[0] == 1:
+                    print("Predicted Result for Next Match: Win")
+                    return "Win"
+                elif predicted_result[0] == 2:
+                    print("Predicted Result for Next Match: Draw")
+                    return "Draw"
+                else:
+                    print("Predicted Result for Next Match: Loss")
+                    return "Loss"
             else:
                 print("No upcoming game stats available for prediction.")
         else:

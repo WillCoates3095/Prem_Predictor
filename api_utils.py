@@ -25,6 +25,26 @@ def fetch_team_stats():
         print(f"Error: {response.status_code}")
         return None
 
+def fetch_next_game_details(leeds_team_id):
+    #Get Leeds next game details
+    if 'leeds_team_id' in locals():
+        next_game_url = f'{BASE_URL}/{API_KEY}/eventsnext.php'
+        response = requests.get(next_game_url, params={'id': leeds_team_id})
+
+        if response.status_code == 200:
+            next_game_data = response.json()
+            if next_game_data['events']:
+                opponent = next_game_data['events'][0]['strAwayTeam'] if next_game_data['events'][0]['idHomeTeam'] == leeds_team_id else next_game_data['events'][0]['strHomeTeam']
+                next_game = next_game_data['events'][0]
+                print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n")
+                return next_game, opponent
+            else:
+                print("No upcoming games found.")
+                return None
+        else:
+            print(f"Error: {response.status_code}")
+            return None
+
 def fetch_next_game(leeds_team_id):
     #Get Leeds next game
     if 'leeds_team_id' in locals():
