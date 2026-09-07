@@ -26,7 +26,8 @@ def home():
         print(f"Home Team: {match.get('Home Team', 'N/A')}")
     previous_encounters_str = "\n".join([
         f"Leeds: {match.get('team_stat', 'N/A')} | {match.get('opponent_stat', 'N/A')}"
-        f" : {opponent} |{'H' if match.get('home_team', 'N/A').strip().lower() in ['leeds united', 'leeds'] else 'A'}| Result: {match.get('result', 'N/A')}"
+        f" : {opponent} |{'H' if match.get('home_team', 'N/A').strip().lower() in ['leeds united', 'leeds'] else 'A'}| "
+        f"Result: {'Win' if match.get('result', 'N/A') ==1 else 'Loss' if match.get('result', 'N/A') ==0 else 'Draw' if match.get('result', 'N/A') ==2 else 'N/A'}"
         for match in previous_encounters
     ])
     last_game_str = (
