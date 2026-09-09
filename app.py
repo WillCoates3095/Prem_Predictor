@@ -20,6 +20,8 @@ def home():
     next_game_str = (
         f"{next_game.get('strEvent', 'N/A')} on {next_game.get('dateEvent', 'N/A')} at {next_game.get('strVenue', 'N/A')}" if next_game else "No next game details available."
     )
+    prediction_str = (f"Prediction: {prediction['prediction']} \nPercentages: \nWin: {prediction['probabilities']['Win']:.1f}% | Draw: {prediction['probabilities']['Draw']:.1f}% | Loss: {prediction['probabilities']['Loss']:.1f}%") \
+        if prediction else "No prediction available."
 
     print(previous_encounters, last_game_details)
     for match in previous_encounters:
@@ -42,10 +44,10 @@ def home():
         <h2>Previous Encounters:</h2>
         <pre>{{ previous_encounters_str }}</pre>
         <h2>Prediction for Next Game:</h2>
-        <pre>Prediction: {{ prediction }}</pre>
+        <pre>{{ prediction }}</pre>
         <h2>Last Game Details:</h2>
         <pre>{{ last_game_str }}</pre>
-    ''', prediction=prediction, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str)
+    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str)
 
 if __name__ == '__main__':
     app.run(debug=True)
