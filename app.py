@@ -31,7 +31,8 @@ def home():
         for match in previous_encounters
     ])
     last_game_str = (
-        f"{last_game_details.get('dateEvent', 'N/A')} | {last_game_details.get('strHomeTeam', 'N/A')} {last_game_details.get('intHomeScore', '-')} - {last_game_details.get('intAwayScore', '-')} {last_game_details.get('strAwayTeam', 'N/A')} at {last_game_details.get('strVenue','N/A')}" if last_game_details else "No last game details available."
+        f"{last_game_details.get('dateEvent', 'N/A')} | {last_game_details.get('strHomeTeam', 'N/A')} {last_game_details.get('intHomeScore', '-')} - {last_game_details.get('intAwayScore', '-')} {last_game_details.get('strAwayTeam', 'N/A')} at {last_game_details.get('strVenue','N/A')}"
+        f"\nGoal Scorers: {last_game_details.get('goal_scorers','N/A')}" if last_game_details else "No last game details available."
     )
 
     return render_template_string('''

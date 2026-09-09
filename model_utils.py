@@ -34,48 +34,29 @@ def get_previous_game_data():
 def generate_prediction(match_df):
     leeds_team_id = fetch_team_stats()
     if not match_df.empty:
-        # Proceed with training and predictions
-        X = match_df[['team_stat', 'opponent_stat']]
-        Y = match_df['result']
+        total_games = len(match_df)
+        leeds_wins = len(match_df[match_df['result'] == 1])
+        draws = len(match_df[match_df['result'] == 2])
+        leeds_losses = len(match_df[match_df['result'] == 0])
+        average_leeds_goals = match_df['team_stat'].mean()
+        average_opponent_goals = match_df['opponent_stat'].mean()
+        win_percentage = leeds_wins/total_games * 100
+        draw_percentage = draws/total_games * 100
+        loss_percentage = leeds_losses/total_games * 100
 
-        # Train/test split
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+        print(f"Total Games: {total_games}\nLeeds Wins: {leeds_wins}\nDraws: {draws}\nLeeds Losses: {leeds_losses}")
+        print(f"Average Leeds Goals: {average_leeds_goals}\nAverage Opponent Goals: {average_opponent_goals}")
+        print(f"Win Percentage: {win_percentage:.2f}%\nDraw Percentage: {draw_percentage:.2f}%\nLoss Percentage: {loss_percentage:.2f}%")
 
-        # Train a Random Forest Classifier
-        model = RandomForestClassifier(random_state=42)
-        model.fit(X_train, Y_train)
+        probabilites ={
+            'Win': win_percentage,
+            'Draw': draw_percentage,
+            'Loss': loss_percentage
+        }
+        prediction = max(probabilites, key=probabilites.get)
+        print(f"Predicted Outcome for Next Game: {prediction} with probabilities: {probabilites}")
+        print("Prediction probabilities:")
+        for outcome, probability in probabilites.items():
+            print(f"{outcome}: {probability:.2f}%")
 
-        # Make predictions
-        Y_pred = model.predict(X_test)
-
-        # Predict the outcome for a new match
-        if leeds_team_id:
-            next_game_stats = fetch_next_game(leeds_team_id)
-            if next_game_stats:
-                #Use stats from upcoming game
-                opponent_stat = next_game_stats[0]["opponent_stat"]
-                team_stat = next_game_stats[0]["team_stat"]
-                new_match = pd.DataFrame({'team_stat': [team_stat], 'opponent_stat': [opponent_stat]})
-
-                predicted_result = model.predict(new_match)
-                if predicted_result[0] == 1:
-                    print("Predicted Result for Next Match: Win")
-                    return "Win"
-                elif predicted_result[0] == 2:
-                    print("Predicted Result for Next Match: Draw")
-                    return "Draw"
-                else:
-                    print("Predicted Result for Next Match: Loss")
-                    return "Loss"
-            else:
-                print("No upcoming game stats available for prediction.")
-        else:
-            print("No team ID available for prediction.")
-
-        # Evaluate the model
-        accuracy = accuracy_score(Y_test, Y_pred)
-        print(f"Model Accuracy: {accuracy * 100:.2f}%")
-
-    else:
-        print("No data available for training.")
-
+        return {"prediction": prediction, "probabilities": probabilites,"average_leeds_goals": average_leeds_goals, "average_opponent_goals": average_opponent_goals}

@@ -81,13 +81,33 @@ def fetch_last_game(leeds_team_id):
                 opponent = last_game['strAwayTeam'] if last_game['idHomeTeam'] == leeds_team_id else last_game['strHomeTeam']
                 home_score = last_game['intHomeScore']
                 away_score = last_game['intAwayScore']
-                print(f"\nLeeds United Last Game: {last_game['strEvent']} on {last_game['dateEvent']} "
-                      f"at {last_game['strVenue']} \nThe fulltime score was {home_score} - {away_score}")
+                print(last_game)
+                goal_scorers = fetch_goal_scorers(last_game['idEvent'])
+                print(goal_scorers)
                 return last_game
             else:
                 print("No previous games found.")
         else:
             print(f"Error: {response.status_code}")
+def fetch_goal_scorers(event_id):
+    event_details_url = f"{BASE_URL}/{API_KEY}/lookupevent.php"
+    response = requests.get(event_details_url, params={'id':event_id})
+    print(response.json())
+    if response.status_code != 200:
+        print("error fetching goal scorers")
+        return {"home": [], "away": []}
+    event_data = response.json()
+    if not event_data.get('events'):
+        print("No goal scorer details")
+        return {"home": [], "away": []}
+    event = event_data['events'][0]
+    print("Event details:", event)
+    home_goal_scorers = event.get('strHomeGoalDetails')
+    away_goal_scorers = event.get('strAwayGoalDetails')
+    return {
+        "home": home_goal_scorers.split('\n') if home_goal_scorers else [],
+        "away": away_goal_scorers.split('\n') if away_goal_scorers else []
+    }
 
 def fetch_team_aliases(team_name):
     url = f"{BASE_URL}/{API_KEY}/searchteams.php"
