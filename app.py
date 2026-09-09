@@ -37,10 +37,13 @@ def home():
         for match in previous_encounters
     ])
     last_game_str = (
-        f"{last_game_details.get('dateEvent', 'N/A')} | {last_game_details.get('strHomeTeam', 'N/A')} {last_game_details.get('intHomeScore', '-')} - {last_game_details.get('intAwayScore', '-')} {last_game_details.get('strAwayTeam', 'N/A')} at {last_game_details.get('strVenue','N/A')}"
-        f"\nGoal Scorers: {last_game_details.get('goal_scorers','N/A')}" if last_game_details else "No last game details available."
+        f"{last_game_details.get('dateEvent', 'N/A')} | {last_game_details.get('strHomeTeam', 'N/A')} {last_game_details.get('intHomeScore', '-')} - {last_game_details.get('intAwayScore', '-')} {last_game_details.get('strAwayTeam', 'N/A')} at {last_game_details.get('strVenue', 'N/A')}"
+        f"\nGoal Scorers: {last_game_details.get('goal_scorers', 'N/A')}" if last_game_details else "No last game details available."
     )
-
+    table_standing_str = (
+        f"Top 5 League Table:\n" + "\n".join(return_league_table())
+        if return_league_table() else "No league table data available."
+    )
     return render_template_string('''
         <h1>Leeds United Match Prediction</h1>
         <h2>Next Game Details:</h2>
@@ -51,7 +54,9 @@ def home():
         <pre>{{ prediction }}</pre>
         <h2>Last Game Details:</h2>
         <pre>{{ last_game_str }}</pre>
-    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str)
+        <h2>League Table Standing (Limited To Top 5):</h2>
+        <pre>{{ table_standing_str }}</pre>
+    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str)
 
 if __name__ == '__main__':
     app.run(debug=True)

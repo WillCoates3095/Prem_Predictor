@@ -67,6 +67,21 @@ def fetch_next_game(leeds_team_id):
         else:
             print(f"Error: {response.status_code}")
             return  []
+def return_league_table(league_id=4328):
+    league_table_url = f'{BASE_URL}/{API_KEY}/lookuptable.php'
+    response = requests.get(league_table_url, params={'l': league_id})
+    if response.status_code == 200:
+        league_table_data = response.json()
+        if league_table_data['table']:
+            print("League Table Data:", league_table_data['table'])
+            formatted_table = [
+                f"{team['intRank']}. {team['strTeam']} - {team['intPoints']} points"
+                for team in league_table_data['table'][:5]
+            ]
+            return formatted_table
+        else:
+            print("No league table data found.")
+            return []
 
 def fetch_last_game(leeds_team_id):
     #Get Leeds last game
