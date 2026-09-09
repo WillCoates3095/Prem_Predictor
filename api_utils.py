@@ -73,7 +73,6 @@ def return_league_table(league_id=4328):
     if response.status_code == 200:
         league_table_data = response.json()
         if league_table_data['table']:
-            print("League Table Data:", league_table_data['table'])
             formatted_table = [
                 f"{team['intRank']}. {team['strTeam']} - {team['intPoints']} points"
                 for team in league_table_data['table'][:5]
@@ -93,6 +92,24 @@ def fetch_last_game(leeds_team_id):
             last_game_data = response.json()
             if last_game_data['results']:
                 last_game = last_game_data['results'][0]
+                season_file = 'Seasons/2026-2027.csv'
+                try:
+                    season_df = pd.read_csv(season_file)
+                except Exception as e:
+                    print(f"Could not read {season_file}: {e}")
+                    return None
+                season_df['idEvent'] = season_df['idEvent'].astype(str).str.strip()
+                if str(last_game['idEvent']) in season_df['idEvent'].values:
+                    game_row = season_df['idEvent'] == str(last_game['idEvent']).strip()
+                    if pd.isna(season_df.loc[game_row, 'Home Score'].values[0]) or pd.isna(season_df.loc[game_row, 'Away Score'].values[0]):
+                        print("Last game scores are missing in the CSV file.")
+                        season_df.loc[game_row, ['Home Score', 'Away Score']] = [last_game['intHomeScore'],last_game['intAwayScore']]
+                        print(f"Updated scores for game {last_game['idEvent']} in {season_file}.")
+                        season_df.to_csv(season_file, index=False)
+                    else:
+                        print("Last game scores are already present in the CSV file.")
+                else:
+                    print(f"Game {last_game['idEvent']} not found in {season_file}. Skipping entry.")
                 opponent = last_game['strAwayTeam'] if last_game['idHomeTeam'] == leeds_team_id else last_game['strHomeTeam']
                 home_score = last_game['intHomeScore']
                 away_score = last_game['intAwayScore']
@@ -262,15 +279,11 @@ def fetch_season_points(): # using games from 2026-2027 season so far
         if home_team.lower() == "leeds united" or home_team.lower() == "leeds":
             if home_score > away_score:
                 total_points += 3
-                print(f"Leeds won at home: {home_score} - {away_score}, Total Points: {total_points}")
             elif home_score == away_score:
                 total_points += 1
-                print(f"Leeds drew at home: {home_score} - {away_score}, Total Points: {total_points}")
         elif away_team.lower() == "leeds united" or away_team.lower() == "leeds":
             if away_score > home_score:
                 total_points += 3
-                print(f"Leeds won away: {away_score} - {home_score}, Total Points: {total_points}")
             elif away_score == home_score:
                 total_points += 1
-                print(f"Leeds drew away: {away_score} - {home_score}, Total Points: {total_points}")
     return total_points
