@@ -56,7 +56,9 @@ def home():
         <pre>{{ last_game_str }}</pre>
         <h2>League Table Standing (Limited To Top 5):</h2>
         <pre>{{ table_standing_str }}</pre>
-    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str)
+        <h2>Leeds Current Points:</h2>
+        <pre>{{ leeds_current_points }}</pre>
+    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str, leeds_current_points = fetch_season_points())
 
 if __name__ == '__main__':
     app.run(debug=True)

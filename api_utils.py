@@ -204,14 +204,11 @@ def fetch_previous_games(opponent):
         all_matches_df["strTimestamp"],
         errors="coerce"
     )
-    # Remove rows with invalid dates
-    all_matches_df = all_matches_df.dropna(
-        subset=["strTimestamp"]
-    )
     all_matches_df = all_matches_df.sort_values(
         "strTimestamp",
         ascending=False
     )
+    all_matches_df = all_matches_df.dropna()
     match_data_list = []
     print()
     for _, match in all_matches_df.iterrows():
@@ -239,3 +236,41 @@ def fetch_previous_games(opponent):
     print()
     return match_data_list
     #return all_matches_df
+def fetch_season_points(): # using games from 2026-2027 season so far
+    season_file='Seasons/2026-2027.csv'
+    try:
+        season_df = pd.read_csv(season_file)
+    except Exception as e:
+        print(f"Could not read {season_file}: {e}")
+        return None
+    required_columns = ["Home Team", "Home Score", "Away Team", "Away Score"]
+    if not all(column in season_df.columns for column in required_columns):
+        print(f"Missing required columns in {season_file}.")
+        return None
+    leeds_games = season_df[
+        (season_df["Home Team"].str.contains("Leeds", case=False, na=False)) |
+        (season_df["Away Team"].str.contains("Leeds", case=False, na=False))
+    ]
+    total_points = 0
+    for _, game in leeds_games.iterrows():
+        home_team = game["Home Team"]
+        away_team = game["Away Team"]
+        home_score = game["Home Score"]
+        away_score = game["Away Score"]
+        if pd.isna(home_score) or pd.isna(away_score):
+            continue # skip missing values
+        if home_team.lower() == "leeds united" or home_team.lower() == "leeds":
+            if home_score > away_score:
+                total_points += 3
+                print(f"Leeds won at home: {home_score} - {away_score}, Total Points: {total_points}")
+            elif home_score == away_score:
+                total_points += 1
+                print(f"Leeds drew at home: {home_score} - {away_score}, Total Points: {total_points}")
+        elif away_team.lower() == "leeds united" or away_team.lower() == "leeds":
+            if away_score > home_score:
+                total_points += 3
+                print(f"Leeds won away: {away_score} - {home_score}, Total Points: {total_points}")
+            elif away_score == home_score:
+                total_points += 1
+                print(f"Leeds drew away: {away_score} - {home_score}, Total Points: {total_points}")
+    return total_points
