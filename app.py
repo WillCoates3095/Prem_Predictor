@@ -20,7 +20,11 @@ def home():
     next_game_str = (
         f"{next_game.get('strEvent', 'N/A')} on {next_game.get('dateEvent', 'N/A')} at {next_game.get('strVenue', 'N/A')}" if next_game else "No next game details available."
     )
-    prediction_str = (f"Prediction: {prediction['prediction']} \nPercentages: \nWin: {prediction['probabilities']['Win']:.1f}% | Draw: {prediction['probabilities']['Draw']:.1f}% | Loss: {prediction['probabilities']['Loss']:.1f}%") \
+    prediction_str = (f"Prediction: {prediction['prediction']} \nPercentages: "
+                      f"\nWin: {prediction['probabilities']['Win']:.1f}% | Draw: {prediction['probabilities']['Draw']:.1f}% | Loss: {prediction['probabilities']['Loss']:.1f}%"
+                      f"\nBTTS: {prediction['btts_percentage']}%\nOver 1.5 Goals: {prediction['over_under_stats']['over_1.5']}% "
+                      f"| Under 1.5 Goals: {prediction['over_under_stats']['under_1.5']}% \nOver 2.5 Goals: {prediction['over_under_stats']['over_2.5']}%"
+                      f" | Under 2.5 Goals: {prediction['over_under_stats']['under_2.5']}% ") \
         if prediction else "No prediction available."
 
     print(previous_encounters, last_game_details)

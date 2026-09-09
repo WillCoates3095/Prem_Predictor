@@ -35,6 +35,8 @@ def generate_prediction(match_df):
     leeds_team_id = fetch_team_stats()
     if not match_df.empty:
         total_games = len(match_df)
+        btts_games = len(match_df[(match_df['team_stat'] > 0) & (match_df['opponent_stat'] > 0)])
+        btts_percentage = (btts_games / total_games) * 100
         leeds_wins = len(match_df[match_df['result'] == 1])
         draws = len(match_df[match_df['result'] == 2])
         leeds_losses = len(match_df[match_df['result'] == 0])
@@ -43,6 +45,17 @@ def generate_prediction(match_df):
         win_percentage = leeds_wins/total_games * 100
         draw_percentage = draws/total_games * 100
         loss_percentage = leeds_losses/total_games * 100
+        over_15_percentage = (len(match_df[match_df['team_stat'] + match_df['opponent_stat'] > 1.5]) / total_games) * 100
+        under_15_percentage = (len(match_df[match_df['team_stat'] + match_df['opponent_stat'] < 1.5]) / total_games) * 100
+        over_25_percentage = (len(match_df[match_df['team_stat'] + match_df['opponent_stat'] > 2.5]) / total_games) * 100
+        under_25_percentage = (len(match_df[match_df['team_stat'] + match_df['opponent_stat'] < 2.5]) / total_games) * 100
+
+        over_under_stats = {
+            "over_1.5": over_15_percentage,
+            "under_1.5": under_15_percentage,
+            "over_2.5": over_25_percentage,
+            "under_2.5": under_25_percentage
+        }
 
         print(f"Total Games: {total_games}\nLeeds Wins: {leeds_wins}\nDraws: {draws}\nLeeds Losses: {leeds_losses}")
         print(f"Average Leeds Goals: {average_leeds_goals}\nAverage Opponent Goals: {average_opponent_goals}")
@@ -59,4 +72,7 @@ def generate_prediction(match_df):
         for outcome, probability in probabilites.items():
             print(f"{outcome}: {probability:.2f}%")
 
-        return {"prediction": prediction, "probabilities": probabilites,"average_leeds_goals": average_leeds_goals, "average_opponent_goals": average_opponent_goals}
+        return {
+            "prediction": prediction, "probabilities": probabilites,"average_leeds_goals": average_leeds_goals,
+            "average_opponent_goals": average_opponent_goals, "btts_percentage": btts_percentage, "over_under_stats": over_under_stats
+        }
