@@ -1,3 +1,5 @@
+from audioop import reverse
+
 import requests
 import glob
 import pandas as pd
@@ -287,3 +289,41 @@ def fetch_season_points(): # using games from 2026-2027 season so far
             elif away_score == home_score:
                 total_points += 1
     return total_points
+def last_five_games ():
+    season_file = 'Seasons/2026-2027.csv'
+    season_df = pd.read_csv(season_file)
+    try:
+        leeds_games = season_df[
+            (season_df["Home Team"].str.contains("Leeds", case=False, na=False)) |
+            (season_df["Away Team"].str.contains("Leeds", case=False, na=False))
+            ]
+        Last_Games = []
+        for _, game in leeds_games.iterrows():
+            home_team = game["Home Team"]
+            away_team = game["Away Team"]
+            if_home = "H" if home_team.lower() == "leeds united" or home_team.lower() == "leeds" else "A"
+            home_score = game["Home Score"]
+            away_score = game["Away Score"]
+            if pd.isna(home_score) or pd.isna(away_score):
+                continue  # skip missing values
+            if home_team.lower() == "leeds united" or home_team.lower() == "leeds":
+                Last_Games.append({
+                    "opponent": away_team,
+                    "result": "Win" if home_score > away_score else "Draw" if home_score == away_score else "Loss",
+                    "score": f"{int(away_score)}-{int(home_score)} ",
+                    "home": if_home
+                })
+            elif away_team.lower() == "leeds united" or away_team.lower() == "leeds":
+                Last_Games.append({
+                    "opponent": home_team,
+                    "result": "Win" if away_score > home_score else "Draw" if away_score == home_score else "Loss",
+                    "score": f"{int(away_score)}-{int(home_score)} ",
+                    "home": if_home
+                })
+        Last_Games = list(reversed(Last_Games[-5:]))  # Get the last 5 games
+
+        print(f"TEST -- Last 5 Games: {Last_Games}")
+        return Last_Games
+    except Exception as e:
+        print(f"Couldnt read the file: {e}")
+        return []

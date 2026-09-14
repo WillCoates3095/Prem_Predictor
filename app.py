@@ -12,6 +12,7 @@ def home():
     opponent = None
     previous_encounters =[]
     last_game_details = None
+    last_five_details = last_five_games()
     if leeds_team_id:
         next_game, opponent = fetch_next_game_details(leeds_team_id)
         last_game_details=fetch_last_game(leeds_team_id)
@@ -26,7 +27,6 @@ def home():
                       f"| Under 1.5 Goals: {prediction['over_under_stats']['under_1.5']}% \nOver 2.5 Goals: {prediction['over_under_stats']['over_2.5']}%"
                       f" | Under 2.5 Goals: {prediction['over_under_stats']['under_2.5']}% ") \
         if prediction else "No prediction available."
-
     print(previous_encounters, last_game_details)
     for match in previous_encounters:
         print(f"Home Team: {match.get('Home Team', 'N/A')}")
@@ -40,6 +40,13 @@ def home():
         f"{last_game_details.get('dateEvent', 'N/A')} | {last_game_details.get('strHomeTeam', 'N/A')} {last_game_details.get('intHomeScore', '-')} - {last_game_details.get('intAwayScore', '-')} {last_game_details.get('strAwayTeam', 'N/A')} at {last_game_details.get('strVenue', 'N/A')}"
         f"\nGoal Scorers: {last_game_details.get('goal_scorers', 'N/A')}" if last_game_details else "No last game details available."
     )
+    last_five_games_str = ("\n".join(
+                           f"Opponent: {match.get('opponent', 'N/A')}"
+                           f" | Result: {match.get('result', 'N/A')}" 
+                           f" | Score: {match.get('score', 'N/A')}"
+                           f"| {match.get('home', 'N/A')}"
+                           for match in last_five_details
+                           ))
     table_standing_str = (
         f"Top 5 League Table:\n" + "\n".join(return_league_table())
         if return_league_table() else "No league table data available."
@@ -58,7 +65,9 @@ def home():
         <pre>{{ table_standing_str }}</pre>
         <h2>Leeds Current Points:</h2>
         <pre>{{ leeds_current_points }}</pre>
-    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str, leeds_current_points = fetch_season_points())
+        <h2>Last Five Games:</h2>
+        <pre>{{ last_five_games_str }}</pre>
+    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str, leeds_current_points = fetch_season_points(), last_five_games_str=last_five_games_str)
 
 if __name__ == '__main__':
     app.run(debug=True)
