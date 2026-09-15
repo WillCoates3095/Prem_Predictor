@@ -55,6 +55,7 @@ def home():
         <h1>Leeds United Match Prediction</h1>
         <h2>Next Game Details:</h2>
         <pre>{{ next_game_str }} </pre>
+        <pre>They have {{ opponent_points }} points</pre>
         <h2>Previous Encounters:</h2>
         <pre>{{ previous_encounters_str }}</pre>
         <h2>Prediction for Next Game:</h2>
@@ -67,7 +68,7 @@ def home():
         <pre>{{ leeds_current_points }}</pre>
         <h2>Last Five Games:</h2>
         <pre>{{ last_five_games_str }}</pre>
-    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str, leeds_current_points = fetch_season_points(), last_five_games_str=last_five_games_str)
+    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str, leeds_current_points = fetch_season_points(), last_five_games_str=last_five_games_str, opponent_points = fetch_opponent_points(opponent))
 
 if __name__ == '__main__':
     app.run(debug=True)

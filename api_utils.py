@@ -326,3 +326,30 @@ def last_five_games ():
     except Exception as e:
         print(f"Couldnt read the file: {e}")
         return []
+def fetch_opponent_points(opponent):
+    season_file = 'Seasons/2026-2027.csv'
+    season_df = pd.read_csv(season_file)
+    opponent_games = season_df[
+        (season_df["Home Team"].str.contains(opponent, case=False, na=False)) |
+        (season_df["Away Team"].str.contains(opponent, case=False, na=False))
+    ]
+    total_points = 0
+    for _, game in opponent_games.iterrows():
+        home_team = game["Home Team"]
+        away_team = game["Away Team"]
+        home_score = game["Home Score"]
+        away_score = game["Away Score"]
+        if pd.isna(home_score) or pd.isna(away_score):
+            continue  # skip missing values
+        if home_team.lower() == opponent.lower():
+            if home_score > away_score:
+                total_points += 3
+            elif home_score == away_score:
+                total_points += 1
+        elif away_team.lower() == opponent.lower():
+            if away_score > home_score:
+                total_points += 3
+            elif away_score == home_score:
+                total_points += 1
+    print(total_points)
+    return total_points
