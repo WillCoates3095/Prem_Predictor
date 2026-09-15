@@ -292,6 +292,8 @@ def fetch_season_points(): # using games from 2026-2027 season so far
 def last_five_games ():
     season_file = 'Seasons/2026-2027.csv'
     season_df = pd.read_csv(season_file)
+    goals_conceded = 0
+    goals_scored = 0
     try:
         leeds_games = season_df[
             (season_df["Home Team"].str.contains("Leeds", case=False, na=False)) |
@@ -310,7 +312,7 @@ def last_five_games ():
                 Last_Games.append({
                     "opponent": away_team,
                     "result": "Win" if home_score > away_score else "Draw" if home_score == away_score else "Loss",
-                    "score": f"{int(away_score)}-{int(home_score)} ",
+                    "score": f"{int(home_score)}-{int(away_score)} ",
                     "home": if_home
                 })
             elif away_team.lower() == "leeds united" or away_team.lower() == "leeds":

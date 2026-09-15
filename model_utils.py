@@ -42,6 +42,8 @@ def generate_prediction(match_df):
         leeds_losses = len(match_df[match_df['result'] == 0])
         average_leeds_goals = match_df['team_stat'].mean()
         average_opponent_goals = match_df['opponent_stat'].mean()
+        leeds_points = fetch_season_points()
+        opponent_points = fetch_opponent_points(fetch_next_game_details(leeds_team_id)[1])  # Fetch opponent points for the next game
         win_percentage = leeds_wins/total_games * 100
         draw_percentage = draws/total_games * 100
         loss_percentage = leeds_losses/total_games * 100
@@ -62,9 +64,9 @@ def generate_prediction(match_df):
         print(f"Win Percentage: {win_percentage:.2f}%\nDraw Percentage: {draw_percentage:.2f}%\nLoss Percentage: {loss_percentage:.2f}%")
 
         probabilites ={
-            'Win': win_percentage,
+            'Win': win_percentage + (leeds_points - opponent_points) * 1,  # 1% for every point difference in favor of Leeds
             'Draw': draw_percentage,
-            'Loss': loss_percentage
+            'Loss': loss_percentage + (opponent_points - leeds_points) * 1  # 1% for every point difference in favor of the opponent
         }
         prediction = max(probabilites, key=probabilites.get)
         print(f"Predicted Outcome for Next Game: {prediction} with probabilities: {probabilites}")
