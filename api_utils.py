@@ -105,7 +105,7 @@ def fetch_last_game(leeds_team_id):
                     game_row = season_df['idEvent'] == str(last_game['idEvent']).strip()
                     if pd.isna(season_df.loc[game_row, 'Home Score'].values[0]) or pd.isna(season_df.loc[game_row, 'Away Score'].values[0]):
                         print("Last game scores are missing in the CSV file.")
-                        season_df.loc[game_row, ['Home Score', 'Away Score']] = [last_game['intHomeScore'],last_game['intAwayScore']]
+                        season_df.loc[game_row, ['Home Score', 'Away Score']] = [float(last_game['intHomeScore']),float(last_game['intAwayScore'])]
                         print(f"Updated scores for game {last_game['idEvent']} in {season_file}.")
                         season_df.to_csv(season_file, index=False)
                     else:
@@ -321,7 +321,6 @@ def last_five_games ():
                     "home": if_home
                 })
         Last_Games = list(reversed(Last_Games[-5:]))  # Get the last 5 games
-
         print(f"TEST -- Last 5 Games: {Last_Games}")
         return Last_Games
     except Exception as e:
