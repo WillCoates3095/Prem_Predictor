@@ -71,4 +71,4 @@ def home():
     ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str, leeds_current_points = fetch_season_points(), last_five_games_str=last_five_games_str, opponent_points = fetch_opponent_points(opponent))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='127.0.0.1', port=5000)

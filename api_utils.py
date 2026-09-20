@@ -3,7 +3,6 @@ from audioop import reverse
 import requests
 import glob
 import pandas as pd
-from django.db.models.expressions import result
 
 API_KEY = '123'
 BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
@@ -167,7 +166,7 @@ def fetch_previous_games(opponent):
     aliases.append(opponent.split()[0])
     print(f"Aliases found: {aliases}")
     print(f"Searching CSV files for all Leeds vs {opponent} matches...")
-    csv_files = glob.glob("seasons/*.csv")
+    csv_files = glob.glob("Seasons/*.csv")
 
     all_matches = []
     for file in csv_files:
