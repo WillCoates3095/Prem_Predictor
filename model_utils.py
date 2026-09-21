@@ -38,7 +38,7 @@ def generate_prediction(match_df):
         print("No historical match data available.")
         return {
             "prediction": "N/A",
-            "probabilities": {},
+            "probabilities": {"Win":0.0,"Draw":0.0,"Loss":0.0},
             "average_leeds_goals": 0,
             "average_opponent_goals": 0,
             "btts_percentage": 0,
@@ -146,7 +146,7 @@ def generate_prediction(match_df):
         print("Not enough historical data to train the Random Forest. Training rows: {len(training_df)}")
         return {
             "prediction": "N/A",
-            "probabilities": {},
+            "probabilities": {"Win":0.0,"Draw":0.0,"Loss":0.0},
             "average_leeds_goals": match_df["team_stat"].mean(),
             "average_opponent_goals": match_df["opponent_stat"].mean(),
             "btts_percentage": calculate_features(match_df)["btts_percentage"],
@@ -190,7 +190,7 @@ def generate_prediction(match_df):
     }])
     prediction_value = model.predict(prediction_data)[0]
     class_probabilities = model.predict_proba(prediction_data)[0]
-    probabilities = {}
+    probabilities = {"Win":0.0,"Draw":0.0,"Loss":0.0}
     for class_value, probability in zip(
         model.classes_,
         class_probabilities
