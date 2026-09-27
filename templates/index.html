@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leeds United — Match Predictor</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <header class="masthead">
+    <img class="crest" src="{{ url_for('static', filename='img/leeds-badge.png') }}" alt="Leeds United crest">
+    <div class="wordmark">
+      <h1>Leeds United</h1>
+      <p class="tagline">Match Predictor</p>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="panel fixture">
+      <h2>Next Fixture</h2>
+      <p class="fixture-line">{{ next_game_str }}</p>
+      {% if opponent %}
+        <p class="fixture-sub">{{ opponent }}{% if opponent_points is not none %} · {{ opponent_points }} points{% endif %}</p>
+      {% endif %}
+    </section>
+
+    <section class="panel prediction">
+      <h2>Prediction</h2>
+      {% if prediction %}
+        <p class="prediction-call">{{ prediction.prediction }}</p>
+
+        <div class="bars">
+          <div class="bar-row">
+            <span class="bar-label">Win</span>
+            <div class="bar-track"><div class="bar-fill win" style="width: {{ prediction.probabilities.Win }}%;"></div></div>
+            <span class="bar-value">{{ "%.1f"|format(prediction.probabilities.Win) }}%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Draw</span>
+            <div class="bar-track"><div class="bar-fill draw" style="width: {{ prediction.probabilities.Draw }}%;"></div></div>
+            <span class="bar-value">{{ "%.1f"|format(prediction.probabilities.Draw) }}%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Loss</span>
+            <div class="bar-track"><div class="bar-fill loss" style="width: {{ prediction.probabilities.Loss }}%;"></div></div>
+            <span class="bar-value">{{ "%.1f"|format(prediction.probabilities.Loss) }}%</span>
+          </div>
+        </div>
+
+        <div class="tile-row">
+          <div class="tile">
+            <span class="tile-value">{{ prediction.btts_percentage }}%</span>
+            <span class="tile-label">BTTS</span>
+          </div>
+          <div class="tile">
+            <span class="tile-value">{{ prediction.over_under_stats['over_1.5'] }}%</span>
+            <span class="tile-label">Over 1.5</span>
+          </div>
+          <div class="tile">
+            <span class="tile-value">{{ prediction.over_under_stats['under_1.5'] }}%</span>
+            <span class="tile-label">Under 1.5</span>
+          </div>
+          <div class="tile">
+            <span class="tile-value">{{ prediction.over_under_stats['over_2.5'] }}%</span>
+            <span class="tile-label">Over 2.5</span>
+          </div>
+          <div class="tile">
+            <span class="tile-value">{{ prediction.over_under_stats['under_2.5'] }}%</span>
+            <span class="tile-label">Under 2.5</span>
+          </div>
+        </div>
+      {% else %}
+        <p class="empty">No prediction available.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Last Game</h2>
+      {% if last_game_str %}
+        <pre class="ledger">{{ last_game_str }}</pre>
+      {% else %}
+        <p class="empty">No last game details available.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Previous Encounters</h2>
+      {% if previous_encounters_str %}
+        <pre class="ledger">{{ previous_encounters_str }}</pre>
+      {% else %}
+        <p class="empty">No previous encounters found.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>League Table <span class="panel-note">(Top 5)</span></h2>
+      {% if league_table %}
+        <pre class="ledger">{% for row in league_table %}{{ row }}
+{% endfor %}</pre>
+      {% else %}
+        <p class="empty">No league table data available.</p>
+      {% endif %}
+      <p class="points">Leeds' current points: <strong>{{ leeds_current_points }}</strong></p>
+    </section>
+
+    <section class="panel">
+      <h2>Last Five Games</h2>
+      {% if last_five_games_str %}
+        <pre class="ledger">{{ last_five_games_str }}</pre>
+      {% else %}
+        <p class="empty">No recent form data available.</p>
+      {% endif %}
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Prem Predictor — built by Will Coates. Work in progress.</p>
+  </footer>
+
+</body>
+</html>

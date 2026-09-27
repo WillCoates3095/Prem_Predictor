@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, render_template
 from model_utils import *
 from api_utils import *
 
@@ -47,28 +47,19 @@ def home():
                            f"| {match.get('home', 'N/A')}"
                            for match in last_five_details
                            ))
-    table_standing_str = (
-        f"Top 5 League Table:\n" + "\n".join(return_league_table())
-        if return_league_table() else "No league table data available."
-    )
-    return render_template_string('''
-        <h1>Leeds United Match Prediction</h1>
-        <h2>Next Game Details:</h2>
-        <pre>{{ next_game_str }} </pre>
-        <pre>They have {{ opponent_points }} points</pre>
-        <h2>Previous Encounters:</h2>
-        <pre>{{ previous_encounters_str }}</pre>
-        <h2>Prediction for Next Game:</h2>
-        <pre>{{ prediction }}</pre>
-        <h2>Last Game Details:</h2>
-        <pre>{{ last_game_str }}</pre>
-        <h2>League Table Standing (Limited To Top 5):</h2>
-        <pre>{{ table_standing_str }}</pre>
-        <h2>Leeds Current Points:</h2>
-        <pre>{{ leeds_current_points }}</pre>
-        <h2>Last Five Games:</h2>
-        <pre>{{ last_five_games_str }}</pre>
-    ''', prediction=prediction_str, next_game_str=next_game_str, previous_encounters_str=previous_encounters_str, last_game_str=last_game_str, table_standing_str=table_standing_str, leeds_current_points = fetch_season_points(), last_five_games_str=last_five_games_str, opponent_points = fetch_opponent_points(opponent))
 
+    league_table = return_league_table() or []
+    return render_template(
+        'index.html',
+         next_game_str=next_game_str,
+         opponent = opponent,
+         opponent_points = fetch_opponent_points(opponent) if opponent else None,
+         previous_encounters_str = previous_encounters_str,
+         prediction = prediction,
+         last_game_str = last_game_str,
+         league_table = league_table,
+         leeds_current_points = fetch_season_points(),
+         last_five_games_str = last_five_games_str,
+ )
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000)
