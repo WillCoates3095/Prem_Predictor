@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leeds United — Match Predictor</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .retry {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 8px 18px;
+      border: 2px solid var(--leeds-blue);
+      color: var(--leeds-blue);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+    }
+    .retry:hover { background: var(--leeds-blue); color: var(--paper); }
+  </style>
+</head>
+<body>
+
+  <header class="masthead">
+    <img class="crest" src="{{ url_for('static', filename='img/leeds-badge.png') }}" alt="Leeds United crest">
+    <div class="wordmark">
+      <h1>Leeds United</h1>
+      <p class="tagline">Match Predictor</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Error 500</h2>
+      <p class="fixture-line">This web app is built on a free API that limits the amount of requests. Please try again in 30 seconds!</p>
+      <a class="retry" href="{{ url_for('home') }}">Try again</a>
+    </section>
+  </main>
+
+  <footer>
+    <p>Prem Predictor — built by Will Coates. Work in progress.</p>
+  </footer>
+
+</body>
+</html>
