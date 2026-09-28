@@ -247,6 +247,7 @@ def fetch_previous_games(opponent):
             "opponent_stat": opponent_stat,
             "result": result,
             "home_team": match['Home Team'],
+            "date": match['strTimestamp'],
         })
         print(
             f"{match['strTimestamp'].date()} | "
