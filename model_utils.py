@@ -215,6 +215,35 @@ def generate_prediction(match_df):
         prediction = "Loss"
     else:
         prediction = str(prediction_value)
+
+    # Adjust the model's result using Leeds' last 5 games (wins push Win up, losses push Loss up)
+    FORM_WEIGHT = 20
+    last_five = last_five_games()
+    form_wins = len([game for game in last_five if game["result"] == "Win"])
+    form_losses = len([game for game in last_five if game["result"] == "Loss"])
+    form_shift = ((form_wins - form_losses) / 5) * FORM_WEIGHT
+    form_shift = min(form_shift, probabilities["Loss"])
+    form_shift = max(form_shift, -probabilities["Win"])
+    probabilities["Win"] = round(probabilities["Win"] + form_shift, 2)
+    probabilities["Loss"] = round(probabilities["Loss"] - form_shift, 2)
+
+    # Draws in the last 5 nudge the draw chance (about 1 in 4 games is normally a draw)
+    DRAW_WEIGHT = 20
+    form_draws = len([game for game in last_five if game["result"] == "Draw"])
+    draw_shift = ((form_draws / 5) - 0.25) * DRAW_WEIGHT
+    others = probabilities["Win"] + probabilities["Loss"]
+    draw_shift = min(draw_shift, others)
+    draw_shift = max(draw_shift, -probabilities["Draw"])
+    if others > 0:
+        win_share = probabilities["Win"] / others
+    else:
+        win_share = 0.5
+    probabilities["Win"] = round(probabilities["Win"] - draw_shift * win_share, 2)
+    probabilities["Loss"] = round(probabilities["Loss"] - draw_shift * (1 - win_share), 2)
+    probabilities["Draw"] = round(probabilities["Draw"] + draw_shift, 2)
+    prediction = max(probabilities, key=probabilities.get)
+    print(f"Last 5 form: {form_wins}W {form_draws}D {form_losses}L, win/loss shift: {form_shift:+.1f}, draw shift: {draw_shift:+.1f}")
+
     # How important each feature is for the prediction
     feature_importance = dict(zip(feature_columns,model.feature_importances_))
     feature_importance = {key: round(value * 100, 2) for key, value in feature_importance.items()}
