@@ -125,7 +125,6 @@ def fetch_last_game(leeds_team_id):
 def fetch_goal_scorers(event_id):
     event_details_url = f"{BASE_URL}/{API_KEY}/lookupevent.php"
     response = requests.get(event_details_url, params={'id':event_id})
-    print(response.json())
     if response.status_code != 200:
         print("error fetching goal scorers")
         return {"home": [], "away": []}
@@ -162,9 +161,14 @@ def fetch_team_aliases(team_name):
 
 def fetch_previous_games(opponent):
     print(f"\nFetching aliases for {opponent}...")
-    aliases = fetch_team_aliases(opponent)
-    aliases.append(opponent.split()[0])
-    print(f"Aliases found: {aliases}")
+    try:
+        aliases = fetch_team_aliases(opponent)
+        aliases.append(opponent.split()[0])
+        print(f"Aliases found: {aliases}")
+    except Exception as e:
+        print(f"Error fetching aliases for {opponent}: {e}")
+        aliases = [opponent.split()[0]]
+        print(f"Using default alias: {aliases}")
     print(f"Searching CSV files for all Leeds vs {opponent} matches...")
     csv_files = glob.glob("Seasons/*.csv")
 
