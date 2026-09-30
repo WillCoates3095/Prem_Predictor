@@ -359,3 +359,13 @@ def fetch_opponent_points(opponent):
                 total_points += 1
     print(total_points)
     return total_points
+
+
+# use weather api and use the dates from the previous games and next games to see if weather made a differnece
+# use playwright to help cache and not use up all requests - run over time every x amount of mins
+# check how close to international break the game is and if that has an effect on the outcome
+# use different ML models and compare the outcomes
+# scrape more data from the game that will allow for more training
+# create a bet using odds and decide how safe the bet is using the ML
+# use R
+# google datasets - kaggle
