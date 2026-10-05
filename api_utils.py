@@ -7,7 +7,7 @@ import pandas as pd
 API_KEY = '123'
 BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
 
-def fetch_team_stats():
+def fetch_team_stats(): # uses API to get team id
     # Example fetch team stats from the API
     team_name = 'Leeds United'
     search_team_url = f'{BASE_URL}/{API_KEY}/searchteams.php'
@@ -26,7 +26,7 @@ def fetch_team_stats():
         print(f"Error: {response.status_code}")
         return None
 
-def fetch_next_game_details(leeds_team_id):
+def fetch_next_game_details(leeds_team_id): # uses API for venue name and date of next game
     #Get Leeds next game details
     if 'leeds_team_id' in locals():
         next_game_url = f'{BASE_URL}/{API_KEY}/eventsnext.php'
@@ -86,6 +86,34 @@ def return_league_table(league_id=4328):
 def fetch_last_game(leeds_team_id):
     #Get Leeds last game
     if 'leeds_team_id' in locals():
+        season_file = 'Seasons/2026-2027.csv'
+        try:
+            season_df = pd.read_csv(season_file, usecols=['Home Team', 'Away Team', 'Home Score', 'Away Score'])
+            leeds_games = season_df[
+                (
+                    season_df['Home Team'].isin(['Leeds', 'Leeds United'])
+                    | season_df['Away Team'].isin(['Leeds', 'Leeds United'])
+                )
+                & season_df['Home Score'].notna()
+                & season_df['Away Score'].notna()
+                & season_df['Home Score'].astype(str).str.strip().ne('')
+                & season_df['Away Score'].astype(str).str.strip().ne('')
+            ]
+            if not leeds_games.empty:
+                game = leeds_games.iloc[-1]
+                last_game = {
+                    'strHomeTeam': game['Home Team'],
+                    'strAwayTeam': game['Away Team'],
+                    'intHomeScore': game['Home Score'],
+                    'intAwayScore': game['Away Score'],
+                    'goal_scorers': 'Unavailable from CSV'
+                }
+                print("Last played game found in the CSV file.")
+                print(last_game)
+                return last_game
+        except Exception as e:
+            print(f"Could not read {season_file}: {e}")
+
         last_game_url = f'{BASE_URL}/{API_KEY}/eventslast.php'
         response = requests.get(last_game_url, params={'id': leeds_team_id})
 
@@ -93,7 +121,6 @@ def fetch_last_game(leeds_team_id):
             last_game_data = response.json()
             if last_game_data['results']:
                 last_game = last_game_data['results'][0]
-                season_file = 'Seasons/2026-2027.csv'
                 try:
                     season_df = pd.read_csv(season_file)
                 except Exception as e:
@@ -359,8 +386,6 @@ def fetch_opponent_points(opponent):
                 total_points += 1
     print(total_points)
     return total_points
-
-
 # use weather api and use the dates from the previous games and next games to see if weather made a differnece
 # use playwright to help cache and not use up all requests - run over time every x amount of mins
 # check how close to international break the game is and if that has an effect on the outcome
