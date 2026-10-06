@@ -18,6 +18,7 @@ def fetch_team_stats(): # uses API to get team id
         if team_data['teams']:
             leeds_team_id = team_data['teams'][0]['idTeam']
             print(f"Leeds United Team ID: {leeds_team_id}")
+            print(f"Leeds United Data: {team_data}")
             return leeds_team_id
         else:
             print("No team found.")
@@ -121,6 +122,7 @@ def fetch_last_game(leeds_team_id):
             last_game_data = response.json()
             if last_game_data['results']:
                 last_game = last_game_data['results'][0]
+                season_file = 'Seasons/2026-2027.csv'
                 try:
                     season_df = pd.read_csv(season_file)
                 except Exception as e:
