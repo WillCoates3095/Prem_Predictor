@@ -1,17 +1,37 @@
+import csv
 import requests
 
-def get_weather_for_date(date, time, location="London"):
-    # Coordinates for London (default)
-    latitude, longitude = 51.5074, -0.1278
-    # Format date and time for API request
+CSV_FILE = 'team_venues.csv'
+
+def get_venue_coordinates(opponent):
+    with open(CSV_FILE, newline='', encoding='utf-8') as csvfile:
+        for row in csv.DictReader(csvfile):
+            if row.get('Team Name') == opponent:
+                try:
+                    return float(row['Latitude']), float(row['Longitude'])
+                except (KeyError, TypeError, ValueError) as error:
+                    raise ValueError(
+                        f'No valid coordinates found for {opponent}.'
+                    ) from error
+    raise ValueError(f'No venue found for opponent: {opponent}.')
+
+def get_weather_for_date(date, time, opponent):
+    latitude, longitude = get_venue_coordinates(opponent)
     start_date = date
     end_date = date
-    # Construct API URL
-    url = f"https://archive-api.open-meteo.com/v1/archive?latitude={latitude}&longitude={longitude}&start_date={start_date}&end_date={end_date}&hourly=temperature_2m,relativehumidity_2m,windspeed_10m,weathercode"
-    # Make API request
-    response = requests.get(url)
+
+    url = (
+        'https://archive-api.open-meteo.com/v1/archive'
+        f'?latitude={latitude}&longitude={longitude}'
+        f'&start_date={start_date}&end_date={end_date}'
+        '&hourly=temperature_2m,relativehumidity_2m,windspeed_10m,weathercode'
+        '&timezone=Europe%2FLondon'
+    )
+
+    response = requests.get(url, timeout=15)
+    response.raise_for_status()
     data = response.json()
-    
+
     hourly_data = data["hourly"]
     requested_time = f"{date}T{time}"
     try:
@@ -30,5 +50,3 @@ def get_weather_for_date(date, time, location="London"):
     print(f"Sunny: {is_sunny}")
     print(f"Windy: {is_windy} ({wind_speed} km/h)")
     return data
-
-print(get_weather_for_date("2023-10-01", "15:00", "London"))
