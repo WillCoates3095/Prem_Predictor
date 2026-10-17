@@ -50,3 +50,29 @@ def get_weather_for_date(date, time, opponent):
     print(f"Sunny: {is_sunny}")
     print(f"Windy: {is_windy} ({wind_speed} km/h)")
     return data
+
+def get_weather_forecast_for_date(date, time, venue):
+    latitude, longitude = get_venue_coordinates(venue)
+    requested_time = time[:5]
+
+    response = requests.get(
+        'https://api.open-meteo.com/v1/forecast',
+        params={
+            'latitude': latitude,
+            'longitude': longitude,
+            'start_date': date,
+            'end_date': date,
+            'hourly': 'temperature_2m,relativehumidity_2m,windspeed_10m,weathercode',
+            'timezone': 'Europe/London',
+        },
+        timeout=15,
+    )
+    response.raise_for_status()
+    data = response.json()
+
+    requested_timestamp = f'{date}T{requested_time}'
+    hourly_data = data.get('hourly', {})
+    if requested_timestamp not in hourly_data.get('time', []):
+        print(f'Forecast time {requested_timestamp} not found in the data.')
+
+    return data

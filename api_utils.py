@@ -3,7 +3,7 @@ from audioop import reverse
 import requests
 import glob
 import pandas as pd
-from weather_service import get_weather_for_date
+from weather_service import get_weather_for_date, get_weather_forecast_for_date
 
 API_KEY = '123'
 BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
@@ -56,10 +56,30 @@ def fetch_next_game(leeds_team_id):
 
         if response.status_code == 200:
             next_game_data = response.json()
-            print(next_game_data['events'][0])
             if next_game_data['events']:
                 next_game = next_game_data['events'][0]
                 opponent = next_game['strAwayTeam'] if next_game['idHomeTeam'] == leeds_team_id else next_game['strHomeTeam']
+                venue = 'Leeds United' if next_game['idHomeTeam'] == leeds_team_id else opponent
+                forecast_date = next_game.get('dateEvent')
+                forecast_time = (next_game.get('strTime') or next_game.get('strTimeLocal') or '')[:5]
+                try:
+                    forecast = get_weather_forecast_for_date(
+                        forecast_date,
+                        forecast_time,
+                        venue,
+                    )
+                    hourly = forecast.get('hourly', {})
+                    forecast_timestamp = f'{forecast_date}T{forecast_time}'
+                    forecast_index = hourly.get('time', []).index(forecast_timestamp)
+                    print(
+                        f"Forecast for {forecast_timestamp} at {venue}: "
+                        f"{hourly['temperature_2m'][forecast_index]}°C, "
+                        f"humidity {hourly['relativehumidity_2m'][forecast_index]}%, "
+                        f"wind {hourly['windspeed_10m'][forecast_index]} km/h, "
+                        f"weather code {hourly['weathercode'][forecast_index]}"
+                    )
+                except (KeyError, ValueError, TypeError, IndexError, requests.RequestException) as error:
+                    print(f'Forecast unavailable for {forecast_date} {forecast_time}: {error}')
                 fetch_last_game(leeds_team_id)
                 print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n")
                 print("Fetching previous games agaist:", opponent)
