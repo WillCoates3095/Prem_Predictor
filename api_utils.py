@@ -363,6 +363,7 @@ def last_five_games ():
             away_score = game["Away Score"]
             if pd.isna(home_score) or pd.isna(away_score):
                 continue  # skip missing values
+
             match_timestamp = pd.to_datetime(game["strTimestamp"], errors="coerce")
             venue_team = "Leeds United" if if_home == "H" else home_team
             weather = None
@@ -377,9 +378,7 @@ def last_five_games ():
                         match_time,
                         venue_team,
                     )
-                    weather_index = weather["hourly"]["time"].index(
-                        f"{match_date}T{match_time}"
-                    )
+                    weather_index = weather["hourly"]["time"].index(f"{match_date}T{match_time}")
                     weather_values = {
                         "temperature_2m": weather["hourly"]["temperature_2m"][weather_index],
                         "relativehumidity_2m": weather["hourly"]["relativehumidity_2m"][weather_index],
@@ -392,6 +391,7 @@ def last_five_games ():
                         f"Weather unavailable for {venue_team} on "
                         f"{match_date} {match_time}: {error}"
                     )
+            
             if home_team.lower() == "leeds united" or home_team.lower() == "leeds":
                 Last_Games.append({
                     "opponent": away_team,
