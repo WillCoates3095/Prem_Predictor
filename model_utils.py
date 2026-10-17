@@ -4,6 +4,40 @@ from sklearn.ensemble import RandomForestClassifier
 
 from api_utils import *
 
+WEATHER_FEATURES = [
+    "weather_temperature",
+    "weather_humidity",
+    "weather_wind_speed",
+    "weather_code",
+    "weather_available",
+]
+
+def extract_weather_features(weather, match_date):
+    features = {feature: 0.0 for feature in WEATHER_FEATURES}
+    if not weather or not match_date or "hourly" not in weather:
+        return features
+
+    hourly = weather["hourly"]
+    timestamps = hourly.get("time", [])
+    if hasattr(match_date, "strftime"):
+        timestamp = match_date.strftime("%Y-%m-%dT%H:%M")
+    else:
+        timestamp = str(match_date)[:16].replace(" ", "T")
+
+    try:
+        weather_index = timestamps.index(timestamp)
+        features.update({
+            "weather_temperature": float(hourly["temperature_2m"][weather_index]),
+            "weather_humidity": float(hourly["relativehumidity_2m"][weather_index]),
+            "weather_wind_speed": float(hourly["windspeed_10m"][weather_index]),
+            "weather_code": float(hourly["weathercode"][weather_index]),
+            "weather_available": 1.0,
+        })
+    except (KeyError, TypeError, ValueError, IndexError):
+        pass
+
+    return features
+
 def get_previous_game_data():
     leeds_team_id = fetch_team_stats()
     if leeds_team_id:
@@ -15,7 +49,14 @@ def get_previous_game_data():
             match_data = {
                 "team_stat": [game["team_stat"] for game in previous_games],
                 "opponent_stat": [game["opponent_stat"] for game in previous_games],
-                "result": [game["result"] for game in previous_games]
+                "result": [game["result"] for game in previous_games],
+                **{
+                    feature: [
+                        extract_weather_features(game.get("weather"), game.get("date"))[feature]
+                        for game in previous_games
+                    ]
+                    for feature in WEATHER_FEATURES
+                },
             }
             match_df = pd.DataFrame(match_data)
             print("Match DataFrame populated with previous games:\n", match_df)
@@ -61,6 +102,31 @@ def generate_prediction(match_df):
     else:
         opponent_points = 0
     points_difference = leeds_points - opponent_points
+
+    next_weather_features = {feature: 0.0 for feature in WEATHER_FEATURES}
+    if leeds_team_id:
+        next_game_details = fetch_next_game_details(leeds_team_id)
+        if next_game_details:
+            next_game, next_opponent = next_game_details
+            venue = "Leeds United" if next_game.get("idHomeTeam") == leeds_team_id else next_opponent
+            forecast_date = next_game.get("dateEvent")
+            forecast_time = (
+                next_game.get("strTime")
+                or next_game.get("strTimeLocal")
+                or ""
+            )[:5]
+            try:
+                forecast = get_weather_forecast_for_date(
+                    forecast_date,
+                    forecast_time,
+                    venue,
+                )
+                next_weather_features = extract_weather_features(
+                    forecast,
+                    f"{forecast_date} {forecast_time}",
+                )
+            except (KeyError, TypeError, ValueError, requests.RequestException) as error:
+                print(f"Forecast unavailable for model features: {error}")
 
     def calculate_features(previous_games):
         total_games = len(previous_games)
@@ -119,6 +185,7 @@ def generate_prediction(match_df):
             "leeds_points": leeds_points,
             "opponent_points": opponent_points,
             "points_difference": points_difference,
+            **{feature: current_game[feature] for feature in WEATHER_FEATURES},
             "result": current_game["result"]
         })
     training_df = pd.DataFrame(training_rows)
@@ -140,7 +207,7 @@ def generate_prediction(match_df):
         "leeds_points",
         "opponent_points",
         "points_difference"
-    ]
+    ] + WEATHER_FEATURES
 
     if len(training_df) < 2:
         print("Not enough historical data to train the Random Forest. Training rows: {len(training_df)}")
@@ -187,6 +254,8 @@ def generate_prediction(match_df):
         "leeds_points": leeds_points,
         "opponent_points": opponent_points,
         "points_difference": points_difference
+        ,
+        **next_weather_features
     }])
     prediction_value = model.predict(prediction_data)[0]
     class_probabilities = model.predict_proba(prediction_data)[0]

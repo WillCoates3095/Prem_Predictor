@@ -3,11 +3,12 @@ from audioop import reverse
 import requests
 import glob
 import pandas as pd
+from weather_service import get_weather_for_date, get_weather_forecast_for_date
 
 API_KEY = '123'
 BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
 
-def fetch_team_stats():
+def fetch_team_stats(): # uses API to get team id
     # Example fetch team stats from the API
     team_name = 'Leeds United'
     search_team_url = f'{BASE_URL}/{API_KEY}/searchteams.php'
@@ -18,6 +19,7 @@ def fetch_team_stats():
         if team_data['teams']:
             leeds_team_id = team_data['teams'][0]['idTeam']
             print(f"Leeds United Team ID: {leeds_team_id}")
+            print(f"Leeds United Data: {team_data}")
             return leeds_team_id
         else:
             print("No team found.")
@@ -26,7 +28,7 @@ def fetch_team_stats():
         print(f"Error: {response.status_code}")
         return None
 
-def fetch_next_game_details(leeds_team_id):
+def fetch_next_game_details(leeds_team_id): # uses API for venue name and date of next game
     #Get Leeds next game details
     if 'leeds_team_id' in locals():
         next_game_url = f'{BASE_URL}/{API_KEY}/eventsnext.php'
@@ -54,10 +56,30 @@ def fetch_next_game(leeds_team_id):
 
         if response.status_code == 200:
             next_game_data = response.json()
-            print(next_game_data['events'][0])
             if next_game_data['events']:
                 next_game = next_game_data['events'][0]
                 opponent = next_game['strAwayTeam'] if next_game['idHomeTeam'] == leeds_team_id else next_game['strHomeTeam']
+                venue = 'Leeds United' if next_game['idHomeTeam'] == leeds_team_id else opponent
+                forecast_date = next_game.get('dateEvent')
+                forecast_time = (next_game.get('strTime') or next_game.get('strTimeLocal') or '')[:5]
+                try:
+                    forecast = get_weather_forecast_for_date(
+                        forecast_date,
+                        forecast_time,
+                        venue,
+                    )
+                    hourly = forecast.get('hourly', {})
+                    forecast_timestamp = f'{forecast_date}T{forecast_time}'
+                    forecast_index = hourly.get('time', []).index(forecast_timestamp)
+                    print(
+                        f"Forecast for {forecast_timestamp} at {venue}: "
+                        f"{hourly['temperature_2m'][forecast_index]}°C, "
+                        f"humidity {hourly['relativehumidity_2m'][forecast_index]}%, "
+                        f"wind {hourly['windspeed_10m'][forecast_index]} km/h, "
+                        f"weather code {hourly['weathercode'][forecast_index]}"
+                    )
+                except (KeyError, ValueError, TypeError, IndexError, requests.RequestException) as error:
+                    print(f'Forecast unavailable for {forecast_date} {forecast_time}: {error}')
                 fetch_last_game(leeds_team_id)
                 print(f"Leeds United Next Game: {next_game['strEvent']} on {next_game['dateEvent']} at {next_game['strVenue']}\n")
                 print("Fetching previous games agaist:", opponent)
@@ -86,6 +108,34 @@ def return_league_table(league_id=4328):
 def fetch_last_game(leeds_team_id):
     #Get Leeds last game
     if 'leeds_team_id' in locals():
+        season_file = 'Seasons/2026-2027.csv'
+        try:
+            season_df = pd.read_csv(season_file, usecols=['Home Team', 'Away Team', 'Home Score', 'Away Score'])
+            leeds_games = season_df[
+                (
+                    season_df['Home Team'].isin(['Leeds', 'Leeds United'])
+                    | season_df['Away Team'].isin(['Leeds', 'Leeds United'])
+                )
+                & season_df['Home Score'].notna()
+                & season_df['Away Score'].notna()
+                & season_df['Home Score'].astype(str).str.strip().ne('')
+                & season_df['Away Score'].astype(str).str.strip().ne('')
+            ]
+            if not leeds_games.empty:
+                game = leeds_games.iloc[-1]
+                last_game = {
+                    'strHomeTeam': game['Home Team'],
+                    'strAwayTeam': game['Away Team'],
+                    'intHomeScore': game['Home Score'],
+                    'intAwayScore': game['Away Score'],
+                    'goal_scorers': 'Unavailable from CSV'
+                }
+                print("Last played game found in the CSV file.")
+                print(last_game)
+                return last_game
+        except Exception as e:
+            print(f"Could not read {season_file}: {e}")
+
         last_game_url = f'{BASE_URL}/{API_KEY}/eventslast.php'
         response = requests.get(last_game_url, params={'id': leeds_team_id})
 
@@ -234,6 +284,8 @@ def fetch_previous_games(opponent):
     match_data_list = []
     print()
     for _, match in all_matches_df.iterrows():
+        home_team = match['Home Team']
+        away_team = match['Away Team']
         team_stat = match['Home Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Away Score']
         opponent_stat = match['Away Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Home Score']
         if opponent_stat == team_stat:
@@ -242,19 +294,38 @@ def fetch_previous_games(opponent):
             result = 1 #Win
         else:
             result = 0
+        venue_team = 'Leeds United' if 'Leeds' in str(home_team) else home_team
+        match_date = match['strTimestamp'].strftime('%Y-%m-%d')
+        match_time = match['strTimestamp'].strftime('%H:%M')
+        weather = None
+        try:
+            weather = get_weather_for_date(match_date, match_time, venue_team)
+            weather_index = weather['hourly']['time'].index(
+                f'{match_date}T{match_time}'
+            )
+            weather_values = {
+                'temperature_2m': weather['hourly']['temperature_2m'][weather_index],
+                'relativehumidity_2m': weather['hourly']['relativehumidity_2m'][weather_index],
+                'windspeed_10m': weather['hourly']['windspeed_10m'][weather_index],
+                'weathercode': weather['hourly']['weathercode'][weather_index],
+            }
+            print(f'Weather at {venue_team}: {weather_values}')
+        except (KeyError, ValueError, requests.RequestException) as error:
+            print(f'Weather unavailable for {venue_team} on {match_date}: {error}')
         match_data_list.append({
             "team_stat": team_stat,
             "opponent_stat": opponent_stat,
             "result": result,
-            "home_team": match['Home Team'],
+            "home_team": home_team,
             "date": match['strTimestamp'],
+            "weather": weather,
         })
         print(
             f"{match['strTimestamp'].date()} | "
-            f"{match['Home Team']} "
+            f"{home_team} "
             f"{match['Home Score']} - "
             f"{match['Away Score']} "
-            f"{match['Away Team']}"
+            f"{away_team}"
         )
     print()
     return match_data_list
@@ -312,19 +383,52 @@ def last_five_games ():
             away_score = game["Away Score"]
             if pd.isna(home_score) or pd.isna(away_score):
                 continue  # skip missing values
+
+            match_timestamp = pd.to_datetime(game["strTimestamp"], errors="coerce")
+            venue_team = "Leeds United" if if_home == "H" else home_team
+            weather = None
+            if pd.isna(match_timestamp):
+                print(f"Weather unavailable for {venue_team}: invalid match timestamp.")
+            else:
+                match_date = match_timestamp.strftime("%Y-%m-%d")
+                match_time = match_timestamp.strftime("%H:%M")
+                try:
+                    weather = get_weather_for_date(
+                        match_date,
+                        match_time,
+                        venue_team,
+                    )
+                    weather_index = weather["hourly"]["time"].index(f"{match_date}T{match_time}")
+                    weather_values = {
+                        "temperature_2m": weather["hourly"]["temperature_2m"][weather_index],
+                        "relativehumidity_2m": weather["hourly"]["relativehumidity_2m"][weather_index],
+                        "windspeed_10m": weather["hourly"]["windspeed_10m"][weather_index],
+                        "weathercode": weather["hourly"]["weathercode"][weather_index],
+                    }
+                    print(f"Weather at {venue_team}: {weather_values}")
+                except (KeyError, ValueError, requests.RequestException) as error:
+                    print(
+                        f"Weather unavailable for {venue_team} on "
+                        f"{match_date} {match_time}: {error}"
+                    )
+            
             if home_team.lower() == "leeds united" or home_team.lower() == "leeds":
                 Last_Games.append({
                     "opponent": away_team,
                     "result": "Win" if home_score > away_score else "Draw" if home_score == away_score else "Loss",
                     "score": f"{int(home_score)}-{int(away_score)} ",
-                    "home": if_home
+                    "home": if_home,
+                    "date": match_timestamp,
+                    "weather": weather,
                 })
             elif away_team.lower() == "leeds united" or away_team.lower() == "leeds":
                 Last_Games.append({
                     "opponent": home_team,
                     "result": "Win" if away_score > home_score else "Draw" if away_score == home_score else "Loss",
                     "score": f"{int(away_score)}-{int(home_score)} ",
-                    "home": if_home
+                    "home": if_home,
+                    "date": match_timestamp,
+                    "weather": weather,
                 })
         Last_Games = list(reversed(Last_Games[-5:]))  # Get the last 5 games
         print(f"TEST -- Last 5 Games: {Last_Games}")
@@ -359,3 +463,11 @@ def fetch_opponent_points(opponent):
                 total_points += 1
     print(total_points)
     return total_points
+# use weather api and use the dates from the previous games and next games to see if weather made a differnece
+# use playwright to help cache and not use up all requests - run over time every x amount of mins
+# check how close to international break the game is and if that has an effect on the outcome
+# use different ML models and compare the outcomes
+# scrape more data from the game that will allow for more training
+# create a bet using odds and decide how safe the bet is using the ML
+# use R
+# google datasets - kaggle
