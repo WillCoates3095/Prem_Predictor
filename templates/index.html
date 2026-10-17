@@ -91,8 +91,23 @@
 
     <section class="panel">
       <h2>Previous Encounters</h2>
-      {% if previous_encounters_str %}
-        <pre class="ledger">{{ previous_encounters_str }}</pre>
+      {% if previous_encounters %}
+        <div class="match-list">
+          {% for match in previous_encounters %}
+            <details class="match-item">
+              <summary>{{ match.summary }}</summary>
+              <div class="match-details">
+                <p><strong>Date:</strong> {{ match.date_display }}</p>
+                {% if match.weather_display %}
+                  <p><strong>Weather:</strong> {{ match.weather_display.temperature if match.weather_display.temperature is not none else 'N/A' }}°C, humidity {{ match.weather_display.humidity if match.weather_display.humidity is not none else 'N/A' }}%, wind {{ match.weather_display.wind_speed if match.weather_display.wind_speed is not none else 'N/A' }} km/h</p>
+                  <p><strong>Conditions:</strong> {{ match.weather_display.weather_label }}</p>
+                {% else %}
+                  <p class="empty">Weather information unavailable.</p>
+                {% endif %}
+              </div>
+            </details>
+          {% endfor %}
+        </div>
       {% else %}
         <p class="empty">No previous encounters found.</p>
       {% endif %}
@@ -111,8 +126,23 @@
 
     <section class="panel">
       <h2>Last Five Games</h2>
-      {% if last_five_games_str %}
-        <pre class="ledger">{{ last_five_games_str }}</pre>
+      {% if last_five_games %}
+        <div class="match-list">
+          {% for match in last_five_games %}
+            <details class="match-item">
+              <summary>{{ match.summary }}</summary>
+              <div class="match-details">
+                <p><strong>Date:</strong> {{ match.date_display }}</p>
+                {% if match.weather_display %}
+                  <p><strong>Weather:</strong> {{ match.weather_display.temperature if match.weather_display.temperature is not none else 'N/A' }}°C, humidity {{ match.weather_display.humidity if match.weather_display.humidity is not none else 'N/A' }}%, wind {{ match.weather_display.wind_speed if match.weather_display.wind_speed is not none else 'N/A' }} km/h</p>
+                  <p><strong>Conditions:</strong> {{ match.weather_display.weather_label }}</p>
+                {% else %}
+                  <p class="empty">Weather information unavailable.</p>
+                {% endif %}
+              </div>
+            </details>
+          {% endfor %}
+        </div>
       {% else %}
         <p class="empty">No recent form data available.</p>
       {% endif %}

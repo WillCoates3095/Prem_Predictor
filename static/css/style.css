@@ -172,6 +172,37 @@ main {
   overflow-x: auto;
 }
 
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.match-item {
+  background: var(--panel);
+  border-left: 3px solid var(--leeds-gold);
+}
+
+.match-item summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-size: 0.85rem;
+  list-style-position: inside;
+}
+
+.match-item summary::marker { color: var(--leeds-blue); }
+
+.match-details {
+  padding: 0 16px 12px 36px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.match-details p { margin: 5px 0; }
+
+.match-details strong { color: var(--ink); }
+
 .points {
   margin: 14px 0 0;
   font-size: 0.9rem;
