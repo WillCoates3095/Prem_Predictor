@@ -209,17 +209,21 @@ def fetch_team_aliases(team_name):
     else:
         print(f"Error fetching team aliases: {response.status_code}")
 
-def fetch_previous_games(opponent):
-    print(f"\nFetching aliases for {opponent}...")
-    try:
-        aliases = fetch_team_aliases(opponent)
-        aliases.append(opponent.split()[0])
-        print(f"Aliases found: {aliases}")
-    except Exception as e:
-        print(f"Error fetching aliases for {opponent}: {e}")
-        aliases = [opponent.split()[0]]
-        print(f"Using default alias: {aliases}")
-    print(f"Searching CSV files for all Leeds vs {opponent} matches...")
+def fetch_previous_games(opponent=None):
+    if opponent:
+        print(f"\nFetching aliases for {opponent}...")
+        try:
+            aliases = fetch_team_aliases(opponent)
+            aliases.append(opponent.split()[0])
+            print(f"Aliases found: {aliases}")
+        except Exception as e:
+            print(f"Error fetching aliases for {opponent}: {e}")
+            aliases = [opponent.split()[0]]
+            print(f"Using default alias: {aliases}")
+        print(f"Searching CSV files for all Leeds vs {opponent} matches...")
+    else:
+        aliases = []
+        print("Searching CSV files for all Leeds matches...")
     csv_files = glob.glob("Seasons/*.csv")
 
     all_matches = []
@@ -246,20 +250,16 @@ def fetch_previous_games(opponent):
             continue
         home = season_df["Home Team"].astype(str)
         away = season_df["Away Team"].astype(str)
-        # Search for matches using aliases
-        matches = season_df[
-            (
-                home.str.contains("Leeds", case=False, na=False)
-                &
-                away.str.contains('|'.join(aliases), case=False, na=False)
-            )
-            |
-            (
-                home.str.contains('|'.join(aliases), case=False, na=False)
-                &
-                away.str.contains("Leeds", case=False, na=False)
-            )
-        ]
+        leeds_home = home.str.contains("Leeds", case=False, na=False)
+        leeds_away = away.str.contains("Leeds", case=False, na=False)
+        if opponent:
+            matches = season_df[
+                (leeds_home & away.str.contains('|'.join(aliases), case=False, na=False))
+                |
+                (home.str.contains('|'.join(aliases), case=False, na=False) & leeds_away)
+            ]
+        else:
+            matches = season_df[leeds_home | leeds_away]
         if not matches.empty:
             print(f"Found {len(matches)} match(es) in {file}")
             all_matches.append(matches)
@@ -286,8 +286,9 @@ def fetch_previous_games(opponent):
     for _, match in all_matches_df.iterrows():
         home_team = match['Home Team']
         away_team = match['Away Team']
-        team_stat = match['Home Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Away Score']
-        opponent_stat = match['Away Score'] if match['Home Team'] == 'Leeds United' or match["Home Team"] == "Leeds" else match['Home Score']
+        leeds_is_home = 'Leeds' in str(match['Home Team']) #bool
+        team_stat = match['Home Score'] if leeds_is_home else match['Away Score']
+        opponent_stat = match['Away Score'] if leeds_is_home else match['Home Score']
         if opponent_stat == team_stat:
             result = 2
         elif team_stat > opponent_stat:
@@ -329,7 +330,9 @@ def fetch_previous_games(opponent):
         )
     print()
     return match_data_list
-    #return all_matches_df
+
+
+#return all_matches_df
 def fetch_season_points(): # using games from 2026-2027 season so far
     season_file='Seasons/2026-2027.csv'
     try:
@@ -463,7 +466,6 @@ def fetch_opponent_points(opponent):
                 total_points += 1
     print(total_points)
     return total_points
-# use weather api and use the dates from the previous games and next games to see if weather made a differnece
 # use playwright to help cache and not use up all requests - run over time every x amount of mins
 # check how close to international break the game is and if that has an effect on the outcome
 # use different ML models and compare the outcomes
@@ -471,3 +473,4 @@ def fetch_opponent_points(opponent):
 # create a bet using odds and decide how safe the bet is using the ML
 # use R
 # google datasets - kaggle
+# REDUCE API CALLS

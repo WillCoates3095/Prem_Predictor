@@ -42,7 +42,7 @@ def get_previous_game_data():
     leeds_team_id = fetch_team_stats()
     if leeds_team_id:
 
-        previous_games = fetch_next_game(leeds_team_id)
+        previous_games = fetch_previous_games()
 
         if previous_games:
             # Populate match_data dynamically
@@ -171,7 +171,7 @@ def generate_prediction(match_df):
         previous_games = match_df.iloc[start_index:i]
         current_game = match_df.iloc[i]
         features = calculate_features(previous_games)
-        training_rows.append({
+        training_rows.append({ # Values to train with
             "avg_goals_scored": features["avg_goals_scored"],
             "avg_goals_conceded": features["avg_goals_conceded"],
             "win_percentage": features["win_percentage"],
